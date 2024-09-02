@@ -7,6 +7,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Drawer } from 'antd';
 import { nodeTypes } from '../../nodeTypes';
+import { FlowContext } from '../../context';
 
 const Graph = () => {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,7 @@ const Graph = () => {
     setOpen(false);
   };
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -33,7 +34,7 @@ const Graph = () => {
 
   const onNodesDelete = useCallback(
     (deleted) => {
-      console.log(deleted, 'deleted',nodes, edges)
+      console.log(deleted, 'deleted', nodes, edges)
       setEdges(
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodes, edges);
@@ -61,41 +62,20 @@ const Graph = () => {
     [nodes, edges],
   );
 
-  const onDelete = (value) => {
+  const handleDel = (value) => {
     const { id } = value;
-    console.log(id, 'onDelete',)
 
-    // const newNodes = [...nodes];
-    // const index = nodes.findIndex(node => node.id === id);
-    // console.log(index, newNodes)
+    const newNodes = [...nodes];
+    const index = nodes.findIndex(node => node.id === id);
+    if (index !== -1) {
+      newNodes.splice(index, 1);
+    }
 
-    setNodes((nodes) => {
-      const newNodes = [...nodes];
-      const index = nodes.findIndex(node => node.id === id);
-      console.log(index, newNodes)
-      if (index !== -1) {
-        newNodes.splice(index, 1)
-      }
-      return [...newNodes]
-    })
+    setNodes(newNodes);
 
-    // onNodesDelete([value])
+    // 手动执行
+    onNodesDelete([value])
   }
-
-  useEffect(() => {
-    const _nodes = initialNodes.map(item => {
-      return {
-        ...item,
-        data: {
-          ...item.data,
-          handleEdit: showDrawer,
-          handleDel: onDelete
-        }
-      }
-    });
-
-    setNodes(_nodes)
-  }, []);
 
   useEffect(() => {
     console.log('nodes change')
@@ -103,18 +83,23 @@ const Graph = () => {
 
   return (
     <div className='graphWrap'>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        fitView
-        onNodesChange={onNodesChange}
-        onNodesDelete={onNodesDelete}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-      >
-        <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
-      </ReactFlow>
+      <FlowContext.Provider value={{
+        handleDel,
+        handleEdit: showDrawer
+      }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          fitView
+          onNodesChange={onNodesChange}
+          onNodesDelete={onNodesDelete}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+        >
+          <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
+        </ReactFlow>
+      </FlowContext.Provider>
       <Drawer title="Basic Drawer" onClose={onClose} open={open}>
         <p>Some contents...</p>
         <p>Some contents...</p>
