@@ -5,18 +5,17 @@ import {
   edges as initialEdges,
 } from '../../data';
 import '@xyflow/react/dist/style.css';
-import { Drawer } from 'antd';
+import { Button, Drawer, Form, Input } from 'antd';
 import { nodeTypes } from '../../nodeTypes';
 import { FlowContext } from '../../context';
+import { useDrawerParams } from '../../utils/hooks';
 
 const Graph = () => {
-  const [open, setOpen] = useState(false);
+  const DrawerParams =  useDrawerParams();
+  const [form] = Form.useForm();
 
-  const showDrawer = () => {
-    setOpen(true);
-  };
-  const onClose = () => {
-    setOpen(false);
+  const showDrawer = (value) => {
+    DrawerParams.showModal(value)
   };
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -77,9 +76,28 @@ const Graph = () => {
     onNodesDelete([value])
   }
 
+  const handleSubmit = () => {
+    const value = form.getFieldsValue();
+    console.log(value, 'value')
+
+    const { id } = DrawerParams.params;
+
+    const newNodes = [...nodes];
+    const index = nodes.findIndex(node => node.id === id);
+    newNodes[index].data.label = value.title;
+    setNodes([...newNodes]);
+    DrawerParams.hideModal();
+  }
+
   useEffect(() => {
-    console.log('nodes change')
-  }, [nodes])
+    if (DrawerParams.visible) {
+      const info = DrawerParams.params;
+      form.setFieldsValue({
+        ...DrawerParams.params,
+        title: info.data.label
+      })
+    }
+  }, [DrawerParams.visible])
 
   return (
     <div className='graphWrap'>
@@ -100,10 +118,15 @@ const Graph = () => {
           <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
         </ReactFlow>
       </FlowContext.Provider>
-      <Drawer title="Basic Drawer" onClose={onClose} open={open}>
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-        <p>Some contents...</p>
+      <Drawer title="Basic Drawer" {...DrawerParams.modalProps}>
+        <Form form={form}>
+          <Form.Item name='title'>
+            <Input />
+          </Form.Item>
+        </Form>
+        <div>
+          <Button onClick={handleSubmit}>Submit</Button>
+        </div>
       </Drawer>
     </div>
   );
