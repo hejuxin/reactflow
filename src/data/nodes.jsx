@@ -1,4 +1,4 @@
-export const nodes = [
+const nodes = [
   // { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
   // { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
   // { id: '3', position: { x: 300, y: 100 }, data: { label: '3' } },
@@ -71,3 +71,14 @@ export const nodes = [
     extent: 'parent',
   },
 ]
+
+const nodesMap = new Map();
+
+nodes.forEach(node => {
+  nodesMap.set(node.id, node)
+});
+
+export {
+  nodes,
+  nodesMap
+}

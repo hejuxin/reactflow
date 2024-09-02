@@ -1,0 +1,10 @@
+.sliderWrap {
+  padding: 16px;
+}
+
+.slideritem {
+  border: 1px solid;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  padding: 8px;
+}
