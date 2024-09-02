@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { addEdge, Background, BackgroundVariant, getConnectedEdges, getIncomers, getOutgoers, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState } from '@xyflow/react';
 import {
   nodes as initialNodes,
@@ -9,10 +9,14 @@ import { Button, Drawer, Form, Input } from 'antd';
 import { nodeTypes } from '../../nodeTypes';
 import { FlowContext } from '../../context';
 import { useDrawerParams } from '../../utils/hooks';
+import { getHash } from '../../utils/util';
 
 const Graph = () => {
-  const DrawerParams =  useDrawerParams();
+  const DrawerParams = useDrawerParams();
   const [form] = Form.useForm();
+
+  const graphWrapper = useRef();
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
   const showDrawer = (value) => {
     DrawerParams.showModal(value)
@@ -99,8 +103,44 @@ const Graph = () => {
     }
   }, [DrawerParams.visible])
 
+  const onDrop = (event) => {
+    event.preventDefault();
+    const reactFlowBounds = graphWrapper.current.getBoundingClientRect();
+    // 获取节点类型
+    const type = event.dataTransfer.getData('application/reactflow');
+
+    // // 使用 screenToFlowPosition 将像素坐标转换为内部 ReactFlow 坐标系
+    // todo 拖拽加入坐标不准问题
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: event.clientX - reactFlowBounds.left,
+      y: event.clientY - reactFlowBounds.top,
+    });
+    const newNode = {
+      id: getHash(),
+      type,
+      position,
+      // 传入节点 data
+      data: { label: `${type} node` },
+    };
+
+    console.log(newNode,'newNode')
+
+    // setElements((els) => els.concat(newNode));
+    setNodes([...nodes, newNode])
+  };
+
+  const onDragOver = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const onInit = (instance) => {
+    console.log('onInit')
+    setReactFlowInstance(instance);
+  }
+
   return (
-    <div className='graphWrap'>
+    <div className='graphWrap' ref={graphWrapper}>
       <FlowContext.Provider value={{
         handleDel,
         handleEdit: showDrawer
@@ -114,6 +154,9 @@ const Graph = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onInit={onInit}
         >
           <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
         </ReactFlow>
