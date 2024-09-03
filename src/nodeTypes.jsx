@@ -1,5 +1,5 @@
-import ToolbarNode from './ToolbarNode';
-import SelectToolbarNode from './SelectToolbarNode';
+import { SelectToolbarNode, ToolbarNode } from "./nodes";
+
 
 export const nodeTypes = {
   tools: ToolbarNode,
