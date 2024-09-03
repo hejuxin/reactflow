@@ -14,6 +14,10 @@ const allowedNodes = [
     name: 'Output Node',
     type: 'output',
   },
+  {
+    name: 'Group',
+    type: 'group'
+  }
 ]
 
 const Slider = () => {

@@ -1,7 +1,8 @@
-import { SelectToolbarNode, ToolbarNode } from "./nodes";
+import { SelectToolbarNode, ToolbarNode, GroupNode } from "./nodes";
 
 
 export const nodeTypes = {
   tools: ToolbarNode,
-  selecttools: SelectToolbarNode
+  selecttools: SelectToolbarNode,
+  group: GroupNode
 };
