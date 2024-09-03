@@ -40,6 +40,7 @@
   align-items: center;
   width: 100%;
   height: 100vh;
+  position: relative;
 }
 
 .container > div {
@@ -49,8 +50,12 @@
 
 .sliderWrap {
   width: 300px;
+  background-color: #fff;
+  position: absolute;
+  z-index: 99;
 }
 
 .graphWrap {
   flex: 1 1 auto;
+  position: relative;
 }
