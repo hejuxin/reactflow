@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { NodeResizer } from '@xyflow/react';
 import ToolbarNode from './ToolbarNode';
+
 const SelectToolbarNode = (props) => {
   const { selected = false } = props;
   return (

@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { addEdge, Background, BackgroundVariant, getConnectedEdges, getIncomers, getOutgoers, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState } from '@xyflow/react';
+import { addEdge, Background, BackgroundVariant, getConnectedEdges, getIncomers, getOutgoers, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
 import {
   nodes as initialNodes,
   edges as initialEdges,
@@ -23,7 +23,6 @@ const Graph = () => {
   };
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -111,10 +110,22 @@ const Graph = () => {
 
     // // 使用 screenToFlowPosition 将像素坐标转换为内部 ReactFlow 坐标系
     // todo 拖拽加入坐标不准问题
-    const position = reactFlowInstance.screenToFlowPosition({
+    const position = {
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
-    });
+    };
+    console.log(event, event.clientX, event.clientY)
+    console.log(reactFlowBounds.left, reactFlowBounds.top);
+
+    // const position = {
+    //   x: event.clientX - reactFlowBounds.left,
+    //   y: event.clientY - reactFlowBounds.top
+    // }
+    console.log(position)
+    console.log(reactFlowInstance.screenToFlowPosition({
+      x: 0,
+      y: 0,
+    }))
     const newNode = {
       id: getHash(),
       type,
@@ -122,8 +133,6 @@ const Graph = () => {
       // 传入节点 data
       data: { label: `${type} node` },
     };
-
-    console.log(newNode,'newNode')
 
     // setElements((els) => els.concat(newNode));
     setNodes([...nodes, newNode])
@@ -139,27 +148,34 @@ const Graph = () => {
     setReactFlowInstance(instance);
   }
 
+  const handleNodesChange = (...p) => {
+    console.log(p);
+    onNodesChange(...p)
+  }
+
   return (
     <div className='graphWrap' ref={graphWrapper}>
       <FlowContext.Provider value={{
         handleDel,
         handleEdit: showDrawer
       }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          fitView
-          onNodesChange={onNodesChange}
-          onNodesDelete={onNodesDelete}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onInit={onInit}
-        >
-          <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
-        </ReactFlow>
+        <ReactFlowProvider>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            fitView
+            onNodesChange={handleNodesChange}
+            onNodesDelete={onNodesDelete}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onInit={onInit}
+          >
+            <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
+          </ReactFlow>
+        </ReactFlowProvider>
       </FlowContext.Provider>
       <Drawer title="Basic Drawer" {...DrawerParams.modalProps}>
         <Form form={form}>
@@ -171,6 +187,9 @@ const Graph = () => {
           <Button onClick={handleSubmit}>Submit</Button>
         </div>
       </Drawer>
+      <Button onClick={() => {
+        console.log(reactFlowInstance.toObject())
+      }}>output</Button>
     </div>
   );
 }

@@ -1,22 +1,30 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Handle, Position, NodeToolbar } from '@xyflow/react';
 import {
   EditOutlined, DeleteOutlined
 } from '@ant-design/icons';
-import { Button } from 'antd';
-import { FlowContext } from './context';
+import { Button, Input } from 'antd';
+import { FlowContext } from '../context';
+import './index.css';
+
 
 function ToolbarNode(props) {
-  console.log(props, 'data')
-  const { data, id } = props;
+  const [isEdit, setIsEdit] = useState(false);
+  const { data, id, selected } = props;
+  console.log(props, 'dd')
+  useEffect(() => {
+    if (!selected) {
+      setIsEdit(false);
+    }
+  }, [selected])
   return (
     <FlowContext.Consumer>
       {
         (value) => {
           // console.log(value, 'value');
-          const { handleEdit,  handleDel} = value;
+          const { handleEdit, handleDel } = value;
           return (
-            <>
+            <div className='nodeWrap' onDoubleClick={() => setIsEdit(true)} onBlur={() => console.log('blur')}>
               <NodeToolbar
                 // isVisible={data.forceToolbarVisible || undefined}
                 position={Position.Right}
@@ -28,9 +36,14 @@ function ToolbarNode(props) {
               <div style={{ padding: '10px 20px' }}>
                 <div>🚀</div>
               </div>
+              {/* <div className='sources'>
+                <Handle type="source" position={Position.Top} />
+                <Handle type="source" position={Position.Left} />
+                <Handle type="source" position={Position.Right} />
+                <Handle type="source" position={Position.Bottom} />
+              </div> */}
               <Handle type="target" position={Position.Left} />
               <Handle type="source" position={Position.Right} />
-
               <div
                 style={{
                   //   position: 'absolute',
@@ -38,8 +51,12 @@ function ToolbarNode(props) {
                   bottom: -15,
                   fontSize: 8,
                 }}
-              >{data.label}</div>
-            </>
+              >
+                {
+                  isEdit ? <Input defaultValue={data.label} /> : data.label
+                }
+              </div>
+            </div>
           )
         }
       }
