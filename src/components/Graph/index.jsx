@@ -102,7 +102,7 @@ const Graph = () => {
     }
   }, [DrawerParams.visible])
 
-  const onDrop = (event) => {
+  const onDrop = useCallback((event) => {
     event.preventDefault();
     const reactFlowBounds = graphWrapper.current.getBoundingClientRect();
     // 获取节点类型
@@ -136,7 +136,7 @@ const Graph = () => {
 
     // setElements((els) => els.concat(newNode));
     setNodes([...nodes, newNode])
-  };
+  }, [reactFlowInstance, setNodes])
 
   const onDragOver = (event) => {
     event.preventDefault();
