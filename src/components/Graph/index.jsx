@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { addEdge, Background, BackgroundVariant, getConnectedEdges, getIncomers, getOutgoers, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
+import { addEdge, Background, BackgroundVariant, getConnectedEdges, getIncomers, getOutgoers, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState } from '@xyflow/react';
 import {
   nodes as initialNodes,
   edges as initialEdges,
@@ -23,6 +23,7 @@ const Graph = () => {
   };
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -110,22 +111,10 @@ const Graph = () => {
 
     // // 使用 screenToFlowPosition 将像素坐标转换为内部 ReactFlow 坐标系
     // todo 拖拽加入坐标不准问题
-    const position = {
+    const position = reactFlowInstance.screenToFlowPosition({
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
-    };
-    console.log(event, event.clientX, event.clientY)
-    console.log(reactFlowBounds.left, reactFlowBounds.top);
-
-    // const position = {
-    //   x: event.clientX - reactFlowBounds.left,
-    //   y: event.clientY - reactFlowBounds.top
-    // }
-    console.log(position)
-    console.log(reactFlowInstance.screenToFlowPosition({
-      x: 0,
-      y: 0,
-    }))
+    });
     const newNode = {
       id: getHash(),
       type,
@@ -147,7 +136,7 @@ const Graph = () => {
     console.log('onInit')
     setReactFlowInstance(instance);
   }
-
+  
   const handleNodesChange = (...p) => {
     console.log(p);
     onNodesChange(...p)
