@@ -53,7 +53,7 @@ const nodes = [
       background: 'rgb(208, 192, 247)',
     },
     parentId: '2-1',
-    extent: 'parent',
+    // extent: 'parent',
   },
   {
     id: '2-3',
@@ -68,7 +68,8 @@ const nodes = [
       background: 'rgb(208, 192, 247)',
     },
     parentId: '2-1',
-    extent: 'parent',
+    // extent: 'parent',
+    // expandParent: true
   },
 ]
 

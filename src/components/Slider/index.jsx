@@ -20,7 +20,7 @@ const allowedNodes = [
   },
   {
     name: 'Swim',
-    type: 'swimming'
+    type: 'swimlanewrap'
   }
 ]
 

@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { NodeResizer } from '@xyflow/react';
 
-const GroupNode = (props) => {
+const ChildNode = (props) => {
   const { selected = false } = props;
   return (
     <>
@@ -11,9 +11,9 @@ const GroupNode = (props) => {
         minWidth={100}
         minHeight={30}
       />
-      {props.data.label}
+      {props.children}
     </>
   )
 }
 
-export default memo(GroupNode);
+export default memo(ChildNode);

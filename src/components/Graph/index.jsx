@@ -10,6 +10,7 @@ import { nodeTypes } from '../../nodeTypes';
 import { FlowContext } from '../../context';
 import { useDrawerParams } from '../../utils/hooks';
 import { getHash } from '../../utils/util';
+import { laneCount, laneCountIncrease, titleWidth, wrapHeight, wrapWidth } from '../../utils/swim';
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -124,35 +125,50 @@ const Graph = () => {
       position,
       // 传入节点 data
       data: { label: `${type} node` },
+      zIndex: 10
     };
 
-    // setNodes((nodes) => {
-    //   if (type === 'swimming') {
-    //     newNode.style = {
-    //       border: `1px solid red`
-    //     }
-    //     nodes.push(newNode);
+    setNodes((nodes) => {
+      if (type === 'swimlanewrap') {
+        newNode.style = {
+          border: `1px solid red`,
+          width: wrapWidth,
+          height: wrapHeight
+        }
+        newNode.zIndex = 5;
+        nodes.push(newNode);
 
-    //     nodes.push({
-    //       id: `${id}-1`,
-    //       type: 'group',
-    //       position: {
-    //         x: 0,
-    //         y: 0
-    //       },
-    //       parentId: id,
-    //       extent: 'parent'
-    //     })
-    //   } else {
-    //     nodes.push(newNode);
-    //   }
+        nodes.push({
+          id: `${id}-${laneCount}`,
+          type: 'swimlane',
+          position: {
+            x: titleWidth,
+            y: 0
+          },
+          style: {
+            width: wrapWidth - titleWidth,
+            height: wrapHeight
+          },
+          data: { label: `children node${laneCount}` },
+          parentId: id,
+          extent: 'parent',
+          draggable: false,
+          zIndex: 6,
+          // expandParent: true
+        })
 
-    //   // nodes.push(newNode);
-    //   return [...nodes];
-    // })
+        laneCountIncrease()
+      } else {
+        nodes.push(newNode);
+      }
 
+      // nodes.push(newNode);
+      return [...nodes];
+    })
     newNodeRef.current = newNode;
-    reactFlowInstance?.addNodes(newNode);
+
+    // newNodeRef.current = newNode;
+    // reactFlowInstance?.addNodes(newNode);
   }, [reactFlowInstance, nodes, setNodes])
 
   const onDragOver = (event) => {
@@ -166,44 +182,62 @@ const Graph = () => {
   }
 
   const handleNodesChange = (...p) => {
-    console.log(p);
     onNodesChange(...p)
     const info = p[0][0];
 
-    // 当类型为尺寸变化时，判断是否有交集
-    if (info?.type === 'dimensions' && newNodeRef.current && info.id === newNodeRef.current.id) {
-      const newNode = newNodeRef.current;
-      newNodeRef.current = null;
-      const intersectingNodes = reactFlowInstance?.getIntersectingNodes({ id: newNode.id }, false);
+    // 当类型为尺寸变化时
+    if (info?.type === 'dimensions') {
+      // ，判断是否有交集
+      if (newNodeRef.current && info.id === newNodeRef.current.id) {
+        const newNode = newNodeRef.current;
+        newNodeRef.current = null;
+        const intersectingNodes = reactFlowInstance?.getIntersectingNodes({ id: newNode.id }, false);
+        console.log(newNode.id, intersectingNodes, 'intersectingNodes')
 
-      if (intersectingNodes.length) {
-        // todo 如果有多个交集
-        const intersectingNode = intersectingNodes[0];
+        if (intersectingNodes.length) {
+          // todo 如果有多个交集
+          const intersectingNode = intersectingNodes[0];
 
-        reactFlowInstance?.updateNode(newNode.id, (node) => {
-          node.parentId = intersectingNode.id;
-          node.extent = 'parent';
-          const position = node.position;
-          const intersectingNodePos = intersectingNode.position;
-          // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
-          node.position = {
-            x: position.x - intersectingNodePos.x,
-            y: position.y - intersectingNodePos.y
-          }
-          return { ...node }
-        }, { replace: true })
+          reactFlowInstance?.updateNode(newNode.id, (node) => {
+            node.parentId = intersectingNode.id;
+            node.extent = 'parent';
+            const position = node.position;
+            const intersectingNodePos = intersectingNode.position;
+            // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
+            node.position = {
+              x: position.x - intersectingNodePos.x,
+              y: position.y - intersectingNodePos.y
+            }
+            return { ...node }
+          }, { replace: true })
 
-        // const newNodes = [...nodes];
-        // newNodes[nodes.length - 1].parentId = intersectingNode.id;
-        // newNodes[nodes.length - 1].extent = 'parent';
-        // setNodes([...newNodes]);
+          // const newNodes = [...nodes];
+          // newNodes[nodes.length - 1].parentId = intersectingNode.id;
+          // newNodes[nodes.length - 1].extent = 'parent';
+          // setNodes([...newNodes]);
+        }
       }
+
+      const id = info.id;
+      const node = nodes.find(node => node.id === id);
+
+      // if (node.type === 'swimlanewrap') {
+      //   const { width } = node;
+      //   const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
+
+      //   laneNodes.forEach(node => {
+      //     reactFlowInstance?.updateNode(node.id, (node) => {
+      //       node.width = width - titleWidth;
+      //       node.position.x = titleWidth
+      //       return { ...node }
+      //     },{ replace: true })
+      //   })
+      // }
     }
 
-    // if (p[0][0].type === 'add') {
-    //   const id = p[0][0].id;
-    //   console.log(p[0][0], p[0][0].item.id, 'ddd')
-    //   const intersectingNodes = reactFlowInstance?.getIntersectingNodes(p[0][0].item, false);
+    // if (info.type === 'add') {
+    //   const id = info.id;
+    //   const intersectingNodes = reactFlowInstance?.getIntersectingNodes(info.item, false);
     //   console.log(intersectingNodes, 'handleNodesChange')
 
     //   // if (intersectingNodes.length) {
