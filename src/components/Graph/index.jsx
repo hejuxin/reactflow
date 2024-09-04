@@ -126,33 +126,33 @@ const Graph = () => {
       data: { label: `${type} node` },
     };
 
-    // setNodes((nodes) => {
-    //   // if (type === 'swimming') {
-    //   //   newNode.style = {
-    //   //     border: `1px solid red`
-    //   //   }
-    //   //   nodes.push(newNode);
+    setNodes((nodes) => {
+      if (type === 'swimming') {
+        newNode.style = {
+          border: `1px solid red`
+        }
+        nodes.push(newNode);
 
-    //   //   nodes.push({
-    //   //     id: `${id}-1`,
-    //   //     type: 'group',
-    //   //     position: {
-    //   //       x: 0,
-    //   //       y: 0
-    //   //     },
-    //   //     parentId: id,
-    //   //     extent: 'parent'
-    //   //   })
-    //   // } else {
-    //   //   nodes.push(newNode);
-    //   // }
+        nodes.push({
+          id: `${id}-1`,
+          type: 'group',
+          position: {
+            x: 0,
+            y: 0
+          },
+          parentId: id,
+          extent: 'parent'
+        })
+      } else {
+        nodes.push(newNode);
+      }
 
-    //   nodes.push(newNode);
-    //   return [...nodes];
-    // })
+      // nodes.push(newNode);
+      return [...nodes];
+    })
 
-    newNodeRef.current = newNode;
-    reactFlowInstance?.addNodes(newNode);
+    // newNodeRef.current = newNode;
+    // reactFlowInstance?.addNodes(newNode);
   }, [reactFlowInstance, nodes, setNodes])
 
   const onDragOver = (event) => {

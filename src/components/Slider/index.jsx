@@ -17,6 +17,10 @@ const allowedNodes = [
   {
     name: 'Group',
     type: 'group'
+  },
+  {
+    name: 'Swim',
+    type: 'swimming'
   }
 ]
 
