@@ -35,14 +35,15 @@ function ToolbarNode(props) {
               <div style={{ padding: '10px 20px' }}>
                 <div>🚀</div>
               </div>
-              {/* <div className='sources'>
-                <Handle type="source" position={Position.Top} />
-                <Handle type="source" position={Position.Left} />
-                <Handle type="source" position={Position.Right} />
-                <Handle type="source" position={Position.Bottom} />
-              </div> */}
-              <Handle type="target" position={Position.Left} />
-              <Handle type="source" position={Position.Right} />
+              <Handle type="source" id="source-1" position={Position.Top} />
+              <Handle type="source" id="source-2" position={Position.Left} />
+              <Handle type="source" id="source-3" position={Position.Right} />
+              <Handle type="source" id="source-4" position={Position.Bottom} />
+
+              <Handle type="target" id="target-1" position={Position.Top} />
+              <Handle type="target" id="target-2" position={Position.Left} />
+              <Handle type="target" id="target-3" position={Position.Right} />
+              <Handle type="target" id="target-4" position={Position.Bottom} />
               <div
                 style={{
                   //   position: 'absolute',
