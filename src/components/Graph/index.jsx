@@ -17,6 +17,7 @@ const Graph = () => {
 
   const graphWrapper = useRef();
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const newNodeRef = useRef();
 
   const showDrawer = (value) => {
     DrawerParams.showModal(value)
@@ -115,17 +116,44 @@ const Graph = () => {
       x: event.clientX - reactFlowBounds.left,
       y: event.clientY - reactFlowBounds.top,
     });
+
+    const id = getHash()
     const newNode = {
-      id: getHash(),
+      id,
       type,
       position,
       // 传入节点 data
       data: { label: `${type} node` },
     };
 
-    // setElements((els) => els.concat(newNode));
-    setNodes([...nodes, newNode])
-  }, [reactFlowInstance, setNodes])
+    // setNodes((nodes) => {
+    //   // if (type === 'swimming') {
+    //   //   newNode.style = {
+    //   //     border: `1px solid red`
+    //   //   }
+    //   //   nodes.push(newNode);
+
+    //   //   nodes.push({
+    //   //     id: `${id}-1`,
+    //   //     type: 'group',
+    //   //     position: {
+    //   //       x: 0,
+    //   //       y: 0
+    //   //     },
+    //   //     parentId: id,
+    //   //     extent: 'parent'
+    //   //   })
+    //   // } else {
+    //   //   nodes.push(newNode);
+    //   // }
+
+    //   nodes.push(newNode);
+    //   return [...nodes];
+    // })
+
+    newNodeRef.current = newNode;
+    reactFlowInstance?.addNodes(newNode);
+  }, [reactFlowInstance, nodes, setNodes])
 
   const onDragOver = (event) => {
     event.preventDefault();
@@ -136,10 +164,58 @@ const Graph = () => {
     console.log('onInit')
     setReactFlowInstance(instance);
   }
-  
+
   const handleNodesChange = (...p) => {
     console.log(p);
     onNodesChange(...p)
+    const info = p[0][0];
+
+    // 当类型为尺寸变化时，判断是否有交集
+    if (info?.type === 'dimensions' && newNodeRef.current && info.id === newNodeRef.current.id) {
+      const newNode = newNodeRef.current;
+      newNodeRef.current = null;
+      const intersectingNodes = reactFlowInstance?.getIntersectingNodes({ id: newNode.id }, false);
+
+      if (intersectingNodes.length) {
+        // todo 如果有多个交集
+        const intersectingNode = intersectingNodes[0];
+
+        reactFlowInstance?.updateNode(newNode.id, (node) => {
+          node.parentId = intersectingNode.id;
+          node.extent = 'parent';
+          const position = node.position;
+          const intersectingNodePos = intersectingNode.position;
+          // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
+          node.position = {
+            x: position.x - intersectingNodePos.x,
+            y: position.y - intersectingNodePos.y
+          }
+          return { ...node }
+        }, { replace: true })
+
+        // const newNodes = [...nodes];
+        // newNodes[nodes.length - 1].parentId = intersectingNode.id;
+        // newNodes[nodes.length - 1].extent = 'parent';
+        // setNodes([...newNodes]);
+      }
+    }
+
+    // if (p[0][0].type === 'add') {
+    //   const id = p[0][0].id;
+    //   console.log(p[0][0], p[0][0].item.id, 'ddd')
+    //   const intersectingNodes = reactFlowInstance?.getIntersectingNodes(p[0][0].item, false);
+    //   console.log(intersectingNodes, 'handleNodesChange')
+
+    //   // if (intersectingNodes.length) {
+    //   //   const {id} = intersectingNodes[0];
+    //   //   const newNodes = [...nodes];
+    //   //   newNodes[nodes.length - 1].parentId = id;
+    //   //   newNodes[nodes.length - 1].extent = 'parent';
+    //   //   console.log(id, 'id', newNodes)
+
+    //   //   setNodes([...newNodes]);
+    //   // }
+    // }
   }
 
   return (

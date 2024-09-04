@@ -11,7 +11,6 @@ import './index.css';
 function ToolbarNode(props) {
   const [isEdit, setIsEdit] = useState(false);
   const { data, id, selected } = props;
-  console.log(props, 'dd')
   useEffect(() => {
     if (!selected) {
       setIsEdit(false);
