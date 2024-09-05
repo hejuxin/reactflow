@@ -1,8 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useRef } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { laneCount, laneCountIncrease, laneHeight, titleWidth, wrapHeight } from '@/utils/swim';
+import { laneCount, laneCountIncrease, laneHeight, titleWidth, laneMinWidth, wrapHeight } from '@/utils/swim';
 import './index.less';
 
 const WrapNode = (props) => {
@@ -10,6 +10,8 @@ const WrapNode = (props) => {
   const nodes = useNodes();
   const nodeIndex = nodes.findIndex(node => node.id === id);
   const reactflow = useReactFlow();
+  const posRef = useRef();
+  const startSize = useRef();
 
   const handleAdd = (pos) => {
     const newNode = {
@@ -57,12 +59,17 @@ const WrapNode = (props) => {
     reactflow.updateNode(id, (node) => {
       node.width = props.width;
       node.height = props.height + laneHeight
-      return {...node}
+      return { ...node }
     }, { replace: true })
 
   }
 
   const handleResizeStart = e => {
+    startSize.current = {
+      width: props.width,
+      height: props.height
+    }
+
     const node = nodes.find(node => node.id === id);
     const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
 
@@ -74,25 +81,87 @@ const WrapNode = (props) => {
     // })
 
     console.log(props, 'handleResizeStart', node)
+    const className = e.sourceEvent.target.className;
+    console.log(className, 'className')
+    let pos;
+    const keys = Object.keys(Position);
+    for (const key of keys) {
+      console.log(key, 'key')
+      if (className.includes(Position[key])) {
+        pos = Position[key];
+        break;
+      }
+    }
+
+    posRef.current = pos;
+    // const isTop = e.sourceEvent.target.className.includes('top');
+    // isTopRef.current = isTop;
+    // const isLeft = e.sourceEvent.target.className.includes('left');
+    // isLeftRef.current = isLeft;
   }
 
   const handleResizeEnd = e => {
-    // console.log(e, e.target.clientWidth, 'clientWidth')
-    const node = nodes.find(node => node.id === id);
-
-    console.log(props, 'handleResizeEnd', node)
-    const { width } = props;
     const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
-    console.log(width, 'ddd')
 
-    laneNodes.forEach(node => {
-      reactflow.updateNode(node.id, {
-        width: width - titleWidth,
-        position: {
-          x: titleWidth
-        }
+    // laneNodes.forEach(node => {
+    //   reactflow.updateNode(node.id, {
+    //     width: width - titleWidth,
+    //     position: {
+    //       x: titleWidth
+    //     }
+    //   })
+
+    const node = nodes.find(node => node.id === id);
+    const width = node.measured.width;
+    const height = node.measured.height;
+    const { width: startWidth, height: startHeight } = startSize.current;
+
+    console.log(width, laneNodes, 'ddd', startWidth)
+    console.log(node.width, node.measured.width)
+
+    if (posRef.current === Position.Left) {
+      // if (startWidth !== width) {
+      laneNodes.forEach(node => {
+        reactflow.updateNode(node.id, (node) => {
+          node.width = width - titleWidth;
+          node.position.x = titleWidth;
+
+          return { ...node }
+        })
       })
-    })
+
+      return;
+      // }
+    } else if (posRef.current === Position.Right) {
+      laneNodes.forEach(node => {
+        reactflow.updateNode(node.id, (node) => {
+          node.width = width - titleWidth;
+          return { ...node }
+        })
+      })
+
+      return;
+    }
+
+    const diffH = height - startHeight;
+
+    if (posRef.current === Position.Top) {
+      let needChangeNode = laneNodes[0];
+      reactflow.updateNode(needChangeNode.id, (node) => {
+        node.height = node.measured.height + diffH;
+        const y = node.position.y;
+        node.position.y = y - diffH;
+        return { ...node }
+      })
+    } else if (posRef.current === Position.Bottom) {
+      let needChangeNode = laneNodes[laneNodes.length - 1];
+      reactflow.updateNode(needChangeNode.id, (node) => {
+        node.height = node.measured.height + diffH;
+        return { ...node }
+      })
+    }
+
+    
   }
 
   return (
@@ -100,10 +169,10 @@ const WrapNode = (props) => {
       <NodeResizer
         color="#ff0071"
         isVisible={selected}
-        minWidth={100}
+        minWidth={laneMinWidth + titleWidth}
         minHeight={wrapHeight / 2}
         onResizeStart={handleResizeStart}
-        // onResizeEnd={handleResizeEnd}
+        onResizeEnd={handleResizeEnd}
       />
       <NodeToolbar
         position={Position.Right}

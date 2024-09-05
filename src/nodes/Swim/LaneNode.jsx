@@ -1,7 +1,7 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
-import { laneHeight, laneMinHeight, titleWidth } from '@/utils/swim';
+import { laneHeight, laneMinHeight, titleWidth, laneMinWidth } from '@/utils/swim';
 import './index.less';
 
 const getHeight = node => {
@@ -191,7 +191,7 @@ const LaneNode = (props) => {
       <NodeResizer
         color="#ff0071"
         isVisible={selected}
-        minWidth={300}
+        minWidth={laneMinWidth}
         minHeight={laneMinHeight}
         // maxHeight={100}
         // onResize={handleResize}

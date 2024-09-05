@@ -169,7 +169,7 @@ const Graph = () => {
           },
           data: { label: `children node${laneCount}` },
           parentId: id,
-          extent: 'parent',
+          // extent: 'parent',
           draggable: false,
           zIndex: 6,
           // expandParent: true
