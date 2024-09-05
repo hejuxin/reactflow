@@ -1,7 +1,5 @@
 import React, { memo } from 'react';
 import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
-import GroupNode from './GroupNode';
-import ChildNode from './childNode';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
 

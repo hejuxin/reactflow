@@ -7,7 +7,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
-    }
-  }
-})
+      // @ 替代为 src
+      "@": resolve(__dirname, "src"),
+      // @component 替代为 src/component
+      "@components": resolve(__dirname, "src/components"),
+      "@assets": resolve(__dirname, "src/assets"),
+      "@constants": resolve(__dirname, "src/constants"),
+    },
+  },
+});
