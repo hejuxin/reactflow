@@ -1,8 +1,8 @@
-import React, { memo, useRef, useEffect } from 'react';
+import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, useNodes, useReactFlow } from '@xyflow/react';
-import { laneHeight, laneMinHeight, titleWidth } from '../../utils/swim';
-import { useState } from 'react';
-import { useMemo } from 'react';
+import cn from 'classnames';
+import { laneHeight, laneMinHeight, titleWidth } from '@/utils/swim';
+import './index.less';
 
 const LaneNode = (props) => {
   const { selected = false, id, parentId } = props;
@@ -12,6 +12,11 @@ const LaneNode = (props) => {
   const nodes = useNodes();
   const startSize = useRef(null);
   const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== id);
+  const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+  const isFirstNode = id === laneNodes[0].id;
+  const isLastNode = id === laneNodes[laneNodes.length - 1].id;
+
+  const isTopRef = useRef();
   // const handleResize = e => {
   //   console.log(e, 'handleResize')
   // }
@@ -47,11 +52,10 @@ const LaneNode = (props) => {
     }
 
     if (startHeight !== height) {
-      const isTop = e.sourceEvent.target.className.includes('top');
-      const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+      // const isTop = e.sourceEvent.target.className.includes('top');
       const diffH = height - startHeight;
       // 第一个子节点，且拖拽的是上边框
-      if (id === laneNodes[0].id && isTop) {
+      if (isFirstNode && isTopRef.current) {
         console.log(diffH)
         reactflow.updateNode(parentId, (node) => {
           node.height = node.measured.height + diffH;
@@ -75,14 +79,20 @@ const LaneNode = (props) => {
             return { ...node }
           })
         })
+
+        return;
       }
 
+
+
       // 最后一个子节点，且拖拽的是下边框
-      if (id === laneNodes[laneNodes.length - 1].id && !isTop) {
+      if (isLastNode && !isTopRef.current) {
         reactflow.updateNode(parentId, (node) => {
           node.height = node.measured.height + diffH;
           return { ...node }
         })
+
+        return;
       }
       const index = nodes.findIndex(node => node.id === id);
 
@@ -93,17 +103,22 @@ const LaneNode = (props) => {
         return _node
       }, { replace: true })
 
-      if (isTop) {
+      // if (id !== laneNodes[0].id && isTopRef.current) {
+      if (isTopRef.current) {
 
         const needChangeNode = nodes[index - 1];
-        console.log(needChangeNode, 'isTop')
+        console.log(needChangeNode, 'isTopRef.current')
         reactflow.updateNode(needChangeNode.id, (node) => {
           const currentHeight = node.height ?? node.style.height;
           console.log(currentHeight, diffH)
           node.height = currentHeight - diffH;
           return { ...node }
         })
-      } else {
+        return;
+      }
+
+      // if (id !== laneNodes[laneNodes.length - 1].id && !isTopRef.current) {
+      if (!isTopRef.current) {
         const needChangeNode = nodes[index + 1];
         reactflow.updateNode(needChangeNode.id, (node) => {
           const currentHeight = node.height ?? node.style.height;
@@ -117,7 +132,6 @@ const LaneNode = (props) => {
         })
       }
     }
-
 
     // if (startHeight < height) {
     //   reactflow.updateNode(parentId, (node) => {
@@ -141,29 +155,31 @@ const LaneNode = (props) => {
     }
 
     const isTop = e.sourceEvent.target.className.includes('top');
+    isTopRef.current = isTop;
     const _id = e.sourceEvent.target.parentNode.dataset;
     console.log(e, e.sourceEvent)
     console.log(nodes, 'nodes')
     // console.log(_id, '+od', _id.id, _id.get(id))
     const index = nodes.findIndex(node => node.id === id);
     const node = nodes.find(node => node.id === id);
+
     if (isTop) {
 
       const needChangeNode = nodes[index - 1];
       console.log(needChangeNode, 'isTop')
-      const diffH = needChangeNode.height ?? needChangeNode.measured.height - laneMinHeight;
+      const diffH = (needChangeNode.height ?? needChangeNode.measured.height) - laneMinHeight;
       console.log(diffH, 'diffH')
-      const currentNodeMaxHeight = node.height ?? node.measured.height + diffH;
+      const currentNodeMaxHeight = (node.height ?? node.measured.height) + diffH;
       console.log(currentNodeMaxHeight, 'currentNodeMaxHeight')
-      setMaxHeight(currentNodeMaxHeight)
+      setMaxHeight(() => currentNodeMaxHeight)
     } else {
       const needChangeNode = nodes[index + 1];
       console.log(needChangeNode, 'not isTop')
-      const diffH = needChangeNode.height ?? needChangeNode.measured.height - laneMinHeight;
+      const diffH = (needChangeNode.height ?? needChangeNode.measured.height) - laneMinHeight;
       console.log(diffH, 'diffH')
-      const currentNodeMaxHeight = node.height ?? node.measured.height + diffH;
+      const currentNodeMaxHeight = (node.height ?? node.measured.height) + diffH;
       console.log(currentNodeMaxHeight, 'currentNodeMaxHeight')
-      setMaxHeight(currentNodeMaxHeight)
+      setMaxHeight(() => currentNodeMaxHeight)
     }
   }
 
@@ -192,7 +208,7 @@ const LaneNode = (props) => {
   }, [maxHeight]);
 
   return (
-    <div style={{ border: '1px solid blue', height: '100%', width: '100%' }}>
+    <div className={cn('laneWrap', { 'noTopborder': isFirstNode })}>
       <NodeResizer
         color="#ff0071"
         isVisible={selected}
@@ -203,6 +219,9 @@ const LaneNode = (props) => {
         onResizeStart={handleResizeStart}
         onResizeEnd={handleResizeEnd}
         {...resizerprops}
+      // lineStyle={{
+      //   display: 'none'
+      // }}
       />
       {props.data.label}
     </div>

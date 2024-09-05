@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { laneCount, laneCountIncrease, laneHeight, titleWidth, wrapHeight } from '../../utils/swim';
+import { laneCount, laneCountIncrease, laneHeight, titleWidth, wrapHeight } from '@/utils/swim';
+import './index.less';
 
 const WrapNode = (props) => {
   const { selected = false, data, id } = props;
@@ -107,8 +108,8 @@ const WrapNode = (props) => {
           </div>
         </div>
       </GroupNode> */}
-      <div>
-        <div>title</div>
+      <div className='swinWrap'>
+        <div className='title' style={{ width: titleWidth }}>title</div>
       </div>
     </>
   )
