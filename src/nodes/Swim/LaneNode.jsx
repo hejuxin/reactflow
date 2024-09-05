@@ -17,38 +17,53 @@ const LaneNode = (props) => {
   const isLastNode = id === laneNodes[laneNodes.length - 1].id;
 
   const isTopRef = useRef();
+  const isLeftRef = useRef();
   // const handleResize = e => {
   //   console.log(e, 'handleResize')
   // }
   const handleResizeEnd = e => {
-    console.log(e, 'handleResizeEnd')
     const node = nodes.find(node => node.id === id);
 
     const { width, height } = node.measured;
     const { width: startWidth, height: startHeight } = startSize.current;
 
-    if (startWidth < width) {
-      needChangeNodes.forEach(node => {
-        reactflow.updateNode(node.id, (node) => {
-          if (node.id === parentId) {
-            node.width = width + titleWidth;
-          } else {
-            node.width = width;
-          }
+    if (startWidth !== width) {
+      if (isLeftRef.current) {
+        const diffW = width - startWidth;
+        // 左侧拖拽缩放时，需更改父级的x定位
+        // 对于所有子泳道，需修改重新x定位。包括自身
+
+        needChangeNodes.forEach(node => {
+          reactflow.updateNode(node.id, (node) => {
+            const x = node.position.x;
+            if (node.id === parentId) {
+              node.width = width + titleWidth;
+              node.position.x = x - diffW;
+            } else {
+              node.width = width;
+              node.position.x = titleWidth;
+            }
+            return { ...node }
+          })
+        })
+
+        reactflow.updateNode(id, node => {
+          node.position.x = titleWidth;
           return { ...node }
         })
-      })
-    } else {
-      needChangeNodes.forEach(node => {
-        reactflow.updateNode(node.id, (node) => {
-          if (node.id === parentId) {
-            node.width = width + titleWidth;
-          } else {
-            node.width = width;
-          }
-          return { ...node }
+
+      } else {
+        needChangeNodes.forEach(node => {
+          reactflow.updateNode(node.id, (node) => {
+            if (node.id === parentId) {
+              node.width = width + titleWidth;
+            } else {
+              node.width = width;
+            }
+            return { ...node }
+          })
         })
-      })
+      }
     }
 
     if (startHeight !== height) {
@@ -148,6 +163,8 @@ const LaneNode = (props) => {
 
     const isTop = e.sourceEvent.target.className.includes('top');
     isTopRef.current = isTop;
+    const isLeft = e.sourceEvent.target.className.includes('left');
+    isLeftRef.current = isLeft;
     const index = nodes.findIndex(node => node.id === id);
     const node = nodes.find(node => node.id === id);
 
@@ -202,7 +219,7 @@ const LaneNode = (props) => {
       <NodeResizer
         color="#ff0071"
         isVisible={selected}
-        minWidth={100}
+        minWidth={300}
         minHeight={laneMinHeight}
         // maxHeight={100}
         // onResize={handleResize}
