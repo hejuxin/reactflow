@@ -53,7 +53,7 @@ function ToolbarNode(props) {
                 }}
               >
                 {
-                  isEdit ? <Input defaultValue={data.label} /> : data.label
+                  isEdit ? <Input defaultValue={data.label} className='nodrag'/> : data.label
                 }
               </div>
             </div>

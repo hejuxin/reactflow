@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { NodeResizer } from '@xyflow/react';
 import GroupNode from './GroupNode';
-import ChildNode from './childNode';
+// import ChildNode from './childNode';
 
 const SwimNode = (props) => {
   const { selected = false, data } = props;
