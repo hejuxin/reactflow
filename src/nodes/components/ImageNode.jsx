@@ -41,7 +41,7 @@ const ImageNode = (props) => {
             {isEdit ? (
               <Input defaultValue={data.label} className="nodrag" />
             ) : (
-              data.label
+              data?.label
             )}
           </div>
         </GroupNode>

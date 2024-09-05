@@ -11,7 +11,7 @@ const GroupNode = (props) => {
         minWidth={100}
         minHeight={30}
       />
-      {props.data.label}
+      {props.data?.label}
     </>
   )
 }

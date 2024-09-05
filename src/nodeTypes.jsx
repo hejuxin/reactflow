@@ -8,6 +8,8 @@ import {
   Inclusive,
   Start,
   End,
+  SwimWrapNode,
+  SwimLaneNode,
 } from "./nodes";
 
 export const nodeTypes = {

@@ -19,7 +19,7 @@ const allowedNodes = [
     type: "group",
   },
   {
-    name: 'Swim',
+    name: '泳道',
     type: 'swimlanewrap'
   },
   {
