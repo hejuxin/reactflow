@@ -1,7 +1,0 @@
-.nodeWrap .sources {
-  display: none;
-}
-
-.nodeWrap:hover .sources {
-  display: block;
-}
