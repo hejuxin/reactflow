@@ -5,7 +5,7 @@ import { laneHeight, laneMinHeight, titleWidth, laneMinWidth } from '@/utils/swi
 import './index.less';
 
 const getHeight = node => {
-  return node.height ?? node.measured.height;
+  return node.measured.height;
 }
 
 const LaneNode = (props) => {
@@ -20,13 +20,15 @@ const LaneNode = (props) => {
   const isFirstNode = id === laneNodes[0].id;
   const isLastNode = id === laneNodes[laneNodes.length - 1].id;
 
+  const node = nodes.find(node => node.id === id);
+
   const isTopRef = useRef();
   const isLeftRef = useRef();
   
   const handleResizeEnd = e => {
     const node = nodes.find(node => node.id === id);
 
-    const width = node.width ?? node.measured.width;
+    const width = node.measured.width;
     const height = getHeight(node);
     const { width: startWidth, height: startHeight } = startSize.current;
 
@@ -160,6 +162,24 @@ const LaneNode = (props) => {
       const currentNodeMaxHeight = getHeight(node) + diffH;
       setMaxHeight(() => currentNodeMaxHeight)
     }
+  }
+
+  const handleResize = e => {
+    if (isTopRef.current && !isFirstNode) {
+      console.log(node.measured.height, 'mmmm')
+      if (node.measured.height > 200) {
+        e.preventDefault?.();
+        return false;
+      }
+    }
+    
+    // {
+    //   if (isLastNode) return;
+    //   const needChangeNode = nodes[index + 1];
+    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
+    //   const currentNodeMaxHeight = getHeight(node) + diffH;
+    //   setMaxHeight(() => currentNodeMaxHeight)
+    // }
   }
 
   useEffect(() => {
