@@ -83,8 +83,6 @@ const LaneNode = (props) => {
         return;
       }
 
-
-
       // 最后一个子节点，且拖拽的是下边框
       if (isLastNode && !isTopRef.current) {
         reactflow.updateNode(parentId, (node) => {
@@ -97,15 +95,12 @@ const LaneNode = (props) => {
       const index = nodes.findIndex(node => node.id === id);
 
       reactflow.updateNode(id, (node) => {
-        // node.extent = '';
         const _node = { ...node };
         _node.extent = 'parent';
         return _node
       }, { replace: true })
 
-      // if (id !== laneNodes[0].id && isTopRef.current) {
       if (isTopRef.current) {
-
         const needChangeNode = nodes[index - 1];
         console.log(needChangeNode, 'isTopRef.current')
         reactflow.updateNode(needChangeNode.id, (node) => {
@@ -115,10 +110,7 @@ const LaneNode = (props) => {
           return { ...node }
         })
         return;
-      }
-
-      // if (id !== laneNodes[laneNodes.length - 1].id && !isTopRef.current) {
-      if (!isTopRef.current) {
+      } else {
         const needChangeNode = nodes[index + 1];
         reactflow.updateNode(needChangeNode.id, (node) => {
           const currentHeight = node.height ?? node.style.height;
@@ -156,14 +148,11 @@ const LaneNode = (props) => {
 
     const isTop = e.sourceEvent.target.className.includes('top');
     isTopRef.current = isTop;
-    const _id = e.sourceEvent.target.parentNode.dataset;
-    console.log(e, e.sourceEvent)
-    console.log(nodes, 'nodes')
-    // console.log(_id, '+od', _id.id, _id.get(id))
     const index = nodes.findIndex(node => node.id === id);
     const node = nodes.find(node => node.id === id);
 
     if (isTop) {
+      if (isFirstNode) return;
 
       const needChangeNode = nodes[index - 1];
       console.log(needChangeNode, 'isTop')
@@ -173,6 +162,7 @@ const LaneNode = (props) => {
       console.log(currentNodeMaxHeight, 'currentNodeMaxHeight')
       setMaxHeight(() => currentNodeMaxHeight)
     } else {
+      if (isLastNode) return;
       const needChangeNode = nodes[index + 1];
       console.log(needChangeNode, 'not isTop')
       const diffH = (needChangeNode.height ?? needChangeNode.measured.height) - laneMinHeight;
