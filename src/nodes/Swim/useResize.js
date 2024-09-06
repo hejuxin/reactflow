@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState, useRef } from "react";
 import { useNodes, useReactFlow } from "@xyflow/react";
 import { titleWidth, laneMinHeight } from "./utils";
 
@@ -11,11 +11,14 @@ export const useResize = (id, parentId) => {
   const reactflow = useReactFlow();
 
   const nodes = useNodes();
-  
+  const [maxHeight, setMaxHeight] = useState();
+
   const isTopRef = useRef();
   const isLeftRef = useRef();
 
   const startSizeRef = useRef();
+  const maxHeightRef = useRef();
+  const needChangeNodeStartHeightRef = useRef();
 
   const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
   const isFirstNode = id === laneNodes[0].id;
@@ -25,13 +28,13 @@ export const useResize = (id, parentId) => {
    * 用于记录移动前的数据
    * @param {*} e 
    */
-  const handleResizeStart = e => {
+  const handleResizeStart = (e, params) => {
     const currentNode = nodes.find(node => node.id === id);
 
     // 记录当前node的宽度和高度
     startSizeRef.current = {
-      width: currentNode.width ?? currentNode.measured.width,
-      height: currentNode.height ?? currentNode.measured.height
+      width: params.width,
+      height: params.height
     }
 
     const isTop = e.sourceEvent.target.className.includes('top');
@@ -39,7 +42,7 @@ export const useResize = (id, parentId) => {
     const isLeft = e.sourceEvent.target.className.includes('left');
     isLeftRef.current = isLeft;
 
-    const index = nodes.findIndex(node => node.id === id);
+
 
     // if (isTop) {
     //   if (isFirstNode) return;
@@ -54,17 +57,59 @@ export const useResize = (id, parentId) => {
     //   const currentNodeMaxHeight = getHeight(node) + diffH;
     //   setMaxHeight(() => currentNodeMaxHeight)
     // }
+
+    computeMaxHeight(currentNode);
+    console.log(currentNode.position.y, 0, currentNode);
+
+    console.log(maxHeightRef.current, 'maxHeightRef.current')
+    // if (maxHeightRef.current) {
+    //   reactflow.updateNode(id, (node) => {
+    //     node.maxHeight = maxHeightRef.current;
+    //     return { ...node }
+    //   })
+    // }
   }
 
 
-  const computeMaxHeight = () => {
+  const computeMaxHeight = (currentNode) => {
     // 第一个子节点向上缩放时，没有最大高度限制
     if (isFirstNode && isTopRef.current) return;
     // 最后一个子节点向下缩放时，没有最大高度限制
     if (isLastNode && !isTopRef.current) return;
 
+    const index = laneNodes.findIndex(node => node.id === id);
+
+    // reactflow.updateNode(id, (node) => {
+    //   const _node = { ...node };
+    //   _node.extent = 'parent';
+    //   return _node
+    // }, { replace: true })
+
+    // 向上缩放时，需获取上一个子泳道的高度
     if (isTopRef.current && !isFirstNode) {
-      const needChangeNode = nodes[index - 1];
+      // 获取上一个子泳道
+      const needChangeNode = laneNodes[index - 1];
+      // 获取上一个子泳道的高度
+      const needChangeNodeHeight = needChangeNode.height ?? needChangeNode.measured.height;
+      // 计算可放大的最大落差高度
+      const diffMaxH = needChangeNodeHeight - laneMinHeight;
+      const currentNodeMaxHeight = (currentNode.height ?? currentNode.measured.height) + diffMaxH;
+      maxHeightRef.current = currentNodeMaxHeight;
+      setMaxHeight(() => currentNodeMaxHeight)
+
+
+      return;
+    }
+
+    if (!isTopRef.current && !isLastNode) {
+      const needChangeNode = laneNodes[index + 1];
+      const needChangeNodeHeight = needChangeNode.height ?? needChangeNode.measured.height;
+      const diffMaxH = needChangeNodeHeight - laneMinHeight;
+      const currentNodeMaxHeight = (currentNode.height ?? currentNode.measured.height) + diffMaxH;
+      maxHeightRef.current = currentNodeMaxHeight;
+      setMaxHeight(() => currentNodeMaxHeight)
+
+      return;
     }
   }
 
@@ -74,43 +119,58 @@ export const useResize = (id, parentId) => {
    * @returns 
    */
   const handleResize = e => {
-    const { width: startWidth, height: startHeight } = startSizeRef.current;
-    const index = nodes.findIndex(node => node.id === id);
+    // 第一个子节点向上缩放时，没有最大高度限制
+    if (isFirstNode && isTopRef.current) return;
+    // 最后一个子节点向下缩放时，没有最大高度限制
+    if (isLastNode && !isTopRef.current) return;
 
-    if (isTopRef.current && !isFirstNode) {
-      const needChangeNode = nodes[index - 1];
-      const diffH = getHeight(needChangeNode) - laneMinHeight;
-      const currentNodeMaxHeight = (node.height ?? startHeight) + diffH;
-      if (node.measured.height > currentNodeMaxHeight && !node.maxHeight) {
-        reactflow.updateNode(id, (node) => {
-          node.maxHeight = currentNodeMaxHeight;
-          return { ...node }
-        })
 
-        maxHeightRef.current = currentNodeMaxHeight;
-        return false;
-      }
+    // const { width: startWidth, height: startHeight } = startSizeRef.current;
+    // const index = nodes.findIndex(node => node.id === id);
 
-      return;
-    }
+    // if (isTopRef.current && !isFirstNode) {
+    //   const currentNode = nodes.find(node => node.id === id);
+    //   console.log(currentNode.position.y, 1, currentNode)
+    //   if (currentNode.measured.height > maxHeightRef.current) {
+    //     // reactflow.updateNode(id, (node) => {
+    //     //   node.maxHeight = maxHeightRef.current;
+    //     //   return { ...node }
+    //     // }, { replace: true })
+    //     // console.log(currentNode.position.y, 2, currentNode)
 
-    if (!isTopRef.current && !isLastNode) {
-      const needChangeNode = nodes[index + 1];
-      const diffH = getHeight(needChangeNode) - laneMinHeight;
-      const currentNodeMaxHeight = (node.height ?? startHeight) + diffH;
-      if (node.measured.height > currentNodeMaxHeight && !node.maxHeight) {
-        reactflow.updateNode(id, (node) => {
-          node.maxHeight = currentNodeMaxHeight;
-          return { ...node }
-        })
+    //     // return false
 
-        maxHeightRef.current = currentNodeMaxHeight;
-        return false;
-      }
 
-      return;
-    }
+    //     // reactflow.updateNode(id, (node) => {
+    //     //     node.height = maxHeightRef.current;
+    //     //     return { ...node }
+    //     //   }, { replace: true })
 
+    //   }
+
+    //   return;
+    // }
+
+    // if (!isTopRef.current && !isLastNode) {
+    //   const needChangeNode = nodes[index + 1];
+    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
+    //   const currentNodeMaxHeight = (node.height ?? startHeight) + diffH;
+    //   if (node.measured.height > currentNodeMaxHeight && !node.maxHeight) {
+    //     reactflow.updateNode(id, (node) => {
+    //       node.maxHeight = currentNodeMaxHeight;
+    //       return { ...node }
+    //     })
+
+    //     maxHeightRef.current = currentNodeMaxHeight;
+    //     return false;
+    //   }
+
+    //   return;
+    // }
+
+
+
+    // ----------------
     // {
     //   if (isLastNode) return;
     //   const needChangeNode = nodes[index + 1];
@@ -125,7 +185,7 @@ export const useResize = (id, parentId) => {
    * @param {*} e 
    * @returns 
    */
-  const handleResizeEnd = e => {
+  const handleResizeEnd = (e, params) => {
     const currentNode = nodes.find(node => node.id === id);
 
     const width = currentNode.measured.width;
@@ -176,7 +236,7 @@ export const useResize = (id, parentId) => {
       if (isFirstNode && isTopRef.current) {
         reactflow.updateNode(parentId, (node) => {
           const height = getHeight(node);
-          
+
           node.height = height + diffH;
 
           const y = node.position.y;
@@ -228,53 +288,74 @@ export const useResize = (id, parentId) => {
       //   return _node
       // }, { replace: true })
 
-      // if (isTopRef.current) {
-      //   const needChangeNode = nodes[index - 1];
-      //   const currentNodeHeight = currentNode.height ?? startHeight;
-      //   reactflow.updateNode(needChangeNode.id, (node) => {
-      //     const needChangeNodeHeight = getHeight(node);
-      //     const newHeight = needChangeNodeHeight - diffH;
-      //     if (diffH > 0) {
-      //       // diffH > 0 代表当前node是放大。needChangeNode需要缩小
-      //       // 高度最小为laneMinHeight
-      //       node.height = Math.max(newHeight, laneMinHeight);
-      //     } else {
-      //       // needChangeNode需要放大
-      //       // 高度最大为 当前node缩小到laneMinHeight的落差 + needChangeNode的高度
-      //       const needChangeNodeMaxHeight = (currentNodeHeight - laneMinHeight) + needChangeNodeHeight;
-      //       console.log(needChangeNodeMaxHeight, 'needChangeNodeMaxHeight')
-      //       node.height = Math.min(newHeight, needChangeNodeMaxHeight)
-      //     }
+      const index = laneNodes.findIndex(node => node.id === id);
+      if (isTopRef.current) {
+        const needChangeNode = laneNodes[index - 1];
+        const currentNodeHeight = startHeight;
+        const needChangeNodeHeight = getHeight(needChangeNode);
+        const newHeight = needChangeNodeHeight - diffH;
+        reactflow.updateNode(needChangeNode.id, (node) => {
+          if (diffH > 0) {
+            // diffH > 0 代表当前node是放大。needChangeNode需要缩小
+            // 高度最小为laneMinHeight
+            node.height = Math.max(newHeight, laneMinHeight);
+          } else {
+            // needChangeNode需要放大
+            // 高度最大为 当前node缩小到laneMinHeight的落差 + needChangeNode的高度
+            const needChangeNodeMaxHeight = (currentNodeHeight - laneMinHeight) + needChangeNodeHeight;
+            console.log(needChangeNodeMaxHeight, 'needChangeNodeMaxHeight')
+            node.height = Math.min(newHeight, needChangeNodeMaxHeight)
+          }
 
-      //     return { ...node }
-      //   })
-      //   return;
-      // }
-      //  else {
-      //   const needChangeNode = nodes[index + 1];
-      //   reactflow.updateNode(needChangeNode.id, (node) => {
-      //     const currentHeight = getHeight(node);
-      //     const newHeight = currentHeight - diffH;
-      //     // 高度最小为laneMinHeight
-      //     node.height = Math.max(newHeight, laneMinHeight);
+          return { ...node }
+        })
 
-      //     const y = node.position.y;
-      //     if (newHeight >= laneMinHeight) {
-      //       const diffY = diffH;
-      //       node.position.y = y + diffY;
-      //     } else {
-      //       const diffY = diffH - (laneMinHeight - newHeight);
-      //       node.position.y = y + diffY;
-      //     }
-      //     return { ...node }
-      //   })
-      // }
+        // 手动更改当前子泳道的y
+        // reactflow.updateNode(id, node => {
+        //   if (diffH > 0) {
+        //     node.position.y = Math.max(newHeight, laneMinHeight);
+        //   } else {
+        //     const needChangeNodeMaxHeight = (currentNodeHeight - laneMinHeight) + needChangeNodeHeight;
+        //     console.log(needChangeNodeMaxHeight, 'needChangeNodeMaxHeight')
+        //     node.position.y = Math.min(newHeight, needChangeNodeMaxHeight)
+        //   }
+
+        //   return { ...node } 
+        // })
+        return;
+      }
+      if (!isTopRef.current) {
+        const needChangeNode = laneNodes[index + 1];
+        const needChangeNodeHeight = needChangeNode.height ?? getHeight(needChangeNode);
+        const newHeight = needChangeNodeHeight - diffH;
+        reactflow.updateNode(needChangeNode.id, (node) => {
+          // 高度最小为laneMinHeight
+          node.height = Math.max(newHeight, laneMinHeight);
+
+          const y = node.position.y;
+          if (newHeight >= laneMinHeight) {
+            const diffY = diffH;
+            node.position.y = y + diffY;
+          } else {
+            const diffY = diffH - (laneMinHeight - newHeight);
+            node.position.y = y + diffY;
+          }
+          return { ...node }
+        })
+      }
     }
+  }
+
+  const shouldResize = e => {
+    if (!maxHeight) return false;
+    return true
   }
 
   return {
     handleResizeStart,
     handleResize,
-    handleResizeEnd
+    handleResizeEnd,
+    shouldResize,
+    maxHeight
   }
 }
