@@ -22,14 +22,16 @@ export const useResize = (id, parentId) => {
   const isLastNode = id === laneNodes[laneNodes.length - 1].id;
 
   /**
-   * 用于记录移动的是哪条边
+   * 用于记录移动前的数据
    * @param {*} e 
    */
   const handleResizeStart = e => {
-    const node = nodes.find(node => node.id === id);
+    const currentNode = nodes.find(node => node.id === id);
+
+    // 记录当前node的宽度和高度
     startSizeRef.current = {
-      width: node.width ?? node.measured.width,
-      height: node.height ?? node.measured.height
+      width: currentNode.width ?? currentNode.measured.width,
+      height: currentNode.height ?? currentNode.measured.height
     }
 
     const isTop = e.sourceEvent.target.className.includes('top');
@@ -52,6 +54,18 @@ export const useResize = (id, parentId) => {
     //   const currentNodeMaxHeight = getHeight(node) + diffH;
     //   setMaxHeight(() => currentNodeMaxHeight)
     // }
+  }
+
+
+  const computeMaxHeight = () => {
+    // 第一个子节点向上缩放时，没有最大高度限制
+    if (isFirstNode && isTopRef.current) return;
+    // 最后一个子节点向下缩放时，没有最大高度限制
+    if (isLastNode && !isTopRef.current) return;
+
+    if (isTopRef.current && !isFirstNode) {
+      const needChangeNode = nodes[index - 1];
+    }
   }
 
   /**
