@@ -2,9 +2,8 @@ import React, { memo, useRef } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { laneCount, laneCountIncrease, laneHeight, titleWidth, laneMinWidth, wrapHeight } from '@/utils/swim';
+import { createLane, titleWidth, laneMinWidth, laneDefalutHeight } from './utils';
 import './index.less';
-import { createLane } from './common';
 
 const WrapNode = (props) => {
   const { selected = false, data, id } = props;
@@ -26,9 +25,9 @@ const WrapNode = (props) => {
         reactflow.updateNode(node.id, node => {
           const y = node.position.y;
           if (node.type === 'swimlane') {
-            node.position.y = y + laneHeight;
+            node.position.y = y + laneDefalutHeight;
           } else {
-            node.position.y = y - laneHeight;
+            node.position.y = y - laneDefalutHeight;
           }
           return { ...node }
         });
@@ -41,7 +40,7 @@ const WrapNode = (props) => {
 
     reactflow.updateNode(id, (node) => {
       node.width = props.width;
-      node.height = props.height + laneHeight
+      node.height = props.height + laneDefalutHeight
       return { ...node }
     }, { replace: true })
 
@@ -153,7 +152,8 @@ const WrapNode = (props) => {
         color="#ff0071"
         isVisible={selected}
         minWidth={laneMinWidth + titleWidth}
-        minHeight={wrapHeight / 2}
+        // todo
+        // minHeight={wrapHeight / 2}
         onResizeStart={handleResizeStart}
         onResizeEnd={handleResizeEnd}
       />

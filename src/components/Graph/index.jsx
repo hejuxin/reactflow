@@ -28,7 +28,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode } from "@/nodes/Swim/common";
+import { createSwimLaneNode } from "@/nodes/Swim/utils";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();

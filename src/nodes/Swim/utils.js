@@ -1,11 +1,12 @@
 import { getHash } from "@/utils/util";
 
-let laneCount = 1;
-let wrapHeight = 300;
 let wrapWidth = 500;
-let laneHeight = 200;
+let wrapHeight = 300;
 let titleWidth = 50;
-const laneMinHeight = laneHeight / 2;
+
+let laneCount = 1;
+let laneDefalutHeight = 200;
+const laneMinHeight = laneDefalutHeight / 2;
 const laneMinWidth = 300;
 
 function laneCountIncrease() {
@@ -26,7 +27,7 @@ function createLane ({
     },
     style: {
       width: parentWidth - titleWidth,
-      height: height ?? laneHeight
+      height: height ?? laneDefalutHeight
     },
     data: { label: `children node${laneCount}` },
     parentId: parentId,
@@ -75,5 +76,9 @@ function createSwimLaneNode({
 
 export {
   createSwimLaneNode,
-  createLane
+  createLane,
+  laneMinWidth,
+  laneMinHeight,
+  laneDefalutHeight,
+  titleWidth
 }
