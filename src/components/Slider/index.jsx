@@ -1,48 +1,15 @@
 import { memo } from "react";
+import { nodeTypesArr } from "@/nodes";
 import "./index.css";
 
-const allowedNodes = [
-  {
-    name: "Input Node",
-    type: "input",
-  },
-  {
-    name: "SelectToolbarNode Node",
-    type: "selecttools", // 这是自定义节点类型
-  },
-  {
-    name: "Output Node",
-    type: "output",
-  },
-  {
-    name: "Group",
-    type: "group",
-  },
-  {
-    name: '泳道',
-    type: 'swimwrap'
-  },
-  {
-    name: "并行网关",
-    type: "parallel-gateway",
-  },
-  {
-    name: "排他网关",
-    type: "exclusive-gateway",
-  },
-  {
-    name: "相容网关",
-    type: "inclusive-gateway",
-  },
-  {
-    name: "开始事件",
-    type: "start-event",
-  },
-  {
-    name: "结束事件",
-    type: "end-event",
-  },
-];
+const allowedNodes = nodeTypesArr.map(item => {
+  if (item.show ?? true) {
+    return {
+      name: item.name,
+      type: item.type
+    }
+  }
+}).filter(Boolean)
 
 const Slider = () => {
   const onDragStart = (evt, nodeType) => {

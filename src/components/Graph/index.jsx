@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { laneCount, laneCountIncrease, titleWidth, wrapHeight, wrapWidth } from '../../utils/swim';
 import {
   addEdge,
   Background,
@@ -22,13 +21,13 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import { nodes as initialNodes, edges as initialEdges } from "../../data";
+import { nodes as initialNodes, edges as initialEdges } from "@/mock";
 import "@xyflow/react/dist/style.css";
 import { Button, Drawer, Form, Input } from "antd";
-import { nodeTypes } from "../../nodeTypes";
-import { FlowContext } from "../../context";
-import { useDrawerParams } from "../../utils/hooks";
-import { getHash } from "../../utils/util";
+import { nodeTypes } from "@/nodes";
+import { FlowContext } from "@/context";
+import { useDrawerParams } from "@/utils/hooks";
+import { getHash } from "@/utils/util";
 import { createSwimLaneNode } from "@/nodes/Swim/common";
 
 const Graph = () => {
