@@ -2,6 +2,7 @@ import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
 import { laneHeight, laneMinHeight, titleWidth, laneMinWidth } from '@/utils/swim';
+import { useResize } from './useResize'
 import './index.less';
 
 const getHeight = node => {
@@ -24,163 +25,166 @@ const LaneNode = (props) => {
 
   const isTopRef = useRef();
   const isLeftRef = useRef();
+
+
+  const { handleResizeStart, handleResize, handleResizeEnd } = useResize(id, parentId);
   
-  const handleResizeEnd = e => {
-    const node = nodes.find(node => node.id === id);
+  // const handleResizeEnd = e => {
+  //   const node = nodes.find(node => node.id === id);
 
-    const width = node.measured.width;
-    const height = getHeight(node);
-    const { width: startWidth, height: startHeight } = startSize.current;
+  //   const width = node.measured.width;
+  //   const height = getHeight(node);
+  //   const { width: startWidth, height: startHeight } = startSize.current;
 
-    if (startWidth !== width) {
-      if (isLeftRef.current) {
-        const diffW = width - startWidth;
-        // 左侧拖拽缩放时，需更改父级的x定位
-        // 对于所有子泳道，需修改重新x定位。包括自身
+  //   if (startWidth !== width) {
+  //     if (isLeftRef.current) {
+  //       const diffW = width - startWidth;
+  //       // 左侧拖拽缩放时，需更改父级的x定位
+  //       // 对于所有子泳道，需修改重新x定位。包括自身
 
-        needChangeNodes.forEach(node => {
-          reactflow.updateNode(node.id, (node) => {
-            const x = node.position.x;
-            if (node.id === parentId) {
-              node.width = width + titleWidth;
-              node.position.x = x - diffW;
-            } else {
-              node.width = width;
-              node.position.x = titleWidth;
-            }
-            return { ...node }
-          })
-        })
+  //       needChangeNodes.forEach(node => {
+  //         reactflow.updateNode(node.id, (node) => {
+  //           const x = node.position.x;
+  //           if (node.id === parentId) {
+  //             node.width = width + titleWidth;
+  //             node.position.x = x - diffW;
+  //           } else {
+  //             node.width = width;
+  //             node.position.x = titleWidth;
+  //           }
+  //           return { ...node }
+  //         })
+  //       })
 
-        reactflow.updateNode(id, node => {
-          node.position.x = titleWidth;
-          return { ...node }
-        })
+  //       reactflow.updateNode(id, node => {
+  //         node.position.x = titleWidth;
+  //         return { ...node }
+  //       })
 
-      } else {
-        needChangeNodes.forEach(node => {
-          reactflow.updateNode(node.id, (node) => {
-            if (node.id === parentId) {
-              node.width = width + titleWidth;
-            } else {
-              node.width = width;
-            }
-            return { ...node }
-          })
-        })
-      }
-    }
+  //     } else {
+  //       needChangeNodes.forEach(node => {
+  //         reactflow.updateNode(node.id, (node) => {
+  //           if (node.id === parentId) {
+  //             node.width = width + titleWidth;
+  //           } else {
+  //             node.width = width;
+  //           }
+  //           return { ...node }
+  //         })
+  //       })
+  //     }
+  //   }
 
-    if (startHeight !== height) {
-      // const isTop = e.sourceEvent.target.className.includes('top');
-      const diffH = height - startHeight;
-      // 第一个子节点，且拖拽的是上边框
-      if (isFirstNode && isTopRef.current) {
-        reactflow.updateNode(parentId, (node) => {
-          const height = getHeight(node);
-          node.height = height + diffH;
+  //   if (startHeight !== height) {
+  //     // const isTop = e.sourceEvent.target.className.includes('top');
+  //     const diffH = height - startHeight;
+  //     // 第一个子节点，且拖拽的是上边框
+  //     if (isFirstNode && isTopRef.current) {
+  //       reactflow.updateNode(parentId, (node) => {
+  //         const height = getHeight(node);
+  //         node.height = height + diffH;
 
-          const y = node.position.y;
-          node.position.y = y - diffH;
-          return { ...node }
-        })
+  //         const y = node.position.y;
+  //         node.position.y = y - diffH;
+  //         return { ...node }
+  //       })
 
-        laneNodes.forEach(node => {
-          reactflow.updateNode(node.id, (node) => {
-            const y = node.position.y;
-            node.position.y = y + diffH;
-            return { ...node }
-          })
-        })
+  //       laneNodes.forEach(node => {
+  //         reactflow.updateNode(node.id, (node) => {
+  //           const y = node.position.y;
+  //           node.position.y = y + diffH;
+  //           return { ...node }
+  //         })
+  //       })
 
-        return;
-      }
+  //       return;
+  //     }
 
-      // 最后一个子节点，且拖拽的是下边框
-      if (isLastNode && !isTopRef.current) {
-        reactflow.updateNode(parentId, (node) => {
-          const height = getHeight(node);
-          node.height = height + diffH;
-          return { ...node }
-        })
+  //     // 最后一个子节点，且拖拽的是下边框
+  //     if (isLastNode && !isTopRef.current) {
+  //       reactflow.updateNode(parentId, (node) => {
+  //         const height = getHeight(node);
+  //         node.height = height + diffH;
+  //         return { ...node }
+  //       })
 
-        return;
-      }
-      const index = nodes.findIndex(node => node.id === id);
+  //       return;
+  //     }
+  //     const index = nodes.findIndex(node => node.id === id);
 
-      reactflow.updateNode(id, (node) => {
-        const _node = { ...node };
-        _node.extent = 'parent';
-        return _node
-      }, { replace: true })
+  //     reactflow.updateNode(id, (node) => {
+  //       const _node = { ...node };
+  //       _node.extent = 'parent';
+  //       return _node
+  //     }, { replace: true })
 
-      if (isTopRef.current) {
-        const needChangeNode = nodes[index - 1];
-        reactflow.updateNode(needChangeNode.id, (node) => {
-          const currentHeight = getHeight(node);
-          node.height = currentHeight - diffH;
-          return { ...node }
-        })
-        return;
-      } else {
-        const needChangeNode = nodes[index + 1];
-        reactflow.updateNode(needChangeNode.id, (node) => {
-          const currentHeight = getHeight(node);
-          node.height = currentHeight - diffH;
+  //     if (isTopRef.current) {
+  //       const needChangeNode = nodes[index - 1];
+  //       reactflow.updateNode(needChangeNode.id, (node) => {
+  //         const currentHeight = getHeight(node);
+  //         node.height = currentHeight - diffH;
+  //         return { ...node }
+  //       })
+  //       return;
+  //     } else {
+  //       const needChangeNode = nodes[index + 1];
+  //       reactflow.updateNode(needChangeNode.id, (node) => {
+  //         const currentHeight = getHeight(node);
+  //         node.height = currentHeight - diffH;
           
-          const y = node.position.y;
-          node.position.y = y + diffH;
-          return { ...node }
-        })
-      }
-    }
-  }
+  //         const y = node.position.y;
+  //         node.position.y = y + diffH;
+  //         return { ...node }
+  //       })
+  //     }
+  //   }
+  // }
 
-  const handleResizeStart = e => {
-    startSize.current = {
-      width: props.width,
-      height: props.height
-    }
+  // const handleResizeStart = e => {
+  //   startSize.current = {
+  //     width: props.width,
+  //     height: props.height
+  //   }
 
-    const isTop = e.sourceEvent.target.className.includes('top');
-    isTopRef.current = isTop;
-    const isLeft = e.sourceEvent.target.className.includes('left');
-    isLeftRef.current = isLeft;
-    const index = nodes.findIndex(node => node.id === id);
-    const node = nodes.find(node => node.id === id);
+  //   const isTop = e.sourceEvent.target.className.includes('top');
+  //   isTopRef.current = isTop;
+  //   const isLeft = e.sourceEvent.target.className.includes('left');
+  //   isLeftRef.current = isLeft;
+  //   const index = nodes.findIndex(node => node.id === id);
+  //   const node = nodes.find(node => node.id === id);
 
-    if (isTop) {
-      if (isFirstNode) return;
-      const needChangeNode = nodes[index - 1];
-      const diffH = getHeight(needChangeNode) - laneMinHeight;
-      const currentNodeMaxHeight = getHeight(node) + diffH;
-      setMaxHeight(() => currentNodeMaxHeight)
-    } else {
-      if (isLastNode) return;
-      const needChangeNode = nodes[index + 1];
-      const diffH = getHeight(needChangeNode) - laneMinHeight;
-      const currentNodeMaxHeight = getHeight(node) + diffH;
-      setMaxHeight(() => currentNodeMaxHeight)
-    }
-  }
+  //   if (isTop) {
+  //     if (isFirstNode) return;
+  //     const needChangeNode = nodes[index - 1];
+  //     const diffH = getHeight(needChangeNode) - laneMinHeight;
+  //     const currentNodeMaxHeight = getHeight(node) + diffH;
+  //     setMaxHeight(() => currentNodeMaxHeight)
+  //   } else {
+  //     if (isLastNode) return;
+  //     const needChangeNode = nodes[index + 1];
+  //     const diffH = getHeight(needChangeNode) - laneMinHeight;
+  //     const currentNodeMaxHeight = getHeight(node) + diffH;
+  //     setMaxHeight(() => currentNodeMaxHeight)
+  //   }
+  // }
 
-  const handleResize = e => {
-    if (isTopRef.current && !isFirstNode) {
-      console.log(node.measured.height, 'mmmm')
-      if (node.measured.height > 200) {
-        e.preventDefault?.();
-        return false;
-      }
-    }
+  // const handleResize = e => {
+  //   if (isTopRef.current && !isFirstNode) {
+  //     console.log(node.measured.height, 'mmmm')
+  //     if (node.measured.height > 200) {
+  //       e.preventDefault?.();
+  //       return false;
+  //     }
+  //   }
     
-    // {
-    //   if (isLastNode) return;
-    //   const needChangeNode = nodes[index + 1];
-    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
-    //   const currentNodeMaxHeight = getHeight(node) + diffH;
-    //   setMaxHeight(() => currentNodeMaxHeight)
-    // }
-  }
+  //   // {
+  //   //   if (isLastNode) return;
+  //   //   const needChangeNode = nodes[index + 1];
+  //   //   const diffH = getHeight(needChangeNode) - laneMinHeight;
+  //   //   const currentNodeMaxHeight = getHeight(node) + diffH;
+  //   //   setMaxHeight(() => currentNodeMaxHeight)
+  //   // }
+  // }
 
   useEffect(() => {
     if (selected) {
