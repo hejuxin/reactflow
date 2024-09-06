@@ -20,7 +20,7 @@ const allowedNodes = [
   },
   {
     name: '泳道',
-    type: 'swimlanewrap'
+    type: 'swimwrap'
   },
   {
     name: "并行网关",

@@ -4,6 +4,7 @@ import { Position } from '@xyflow/react';
 import { Button } from 'antd';
 import { laneCount, laneCountIncrease, laneHeight, titleWidth, laneMinWidth, wrapHeight } from '@/utils/swim';
 import './index.less';
+import { createLane } from './common';
 
 const WrapNode = (props) => {
   const { selected = false, data, id } = props;
@@ -14,27 +15,11 @@ const WrapNode = (props) => {
   const startSize = useRef();
 
   const handleAdd = (pos) => {
-    const newNode = {
-      id: `${id}-${laneCount}`,
-      type: 'swimlane',
-      position: {
-        x: titleWidth,
-        y: 0
-      },
-      style: {
-        width: props.width - titleWidth,
-        height: laneHeight
-      },
-      data: { label: `children node${laneCount}` },
-      parentId: id,
-      extent: 'parent',
-      draggable: false,
-      zIndex: 6
-    }
+    const laneNode = createLane({ parentId: id, parentWidth: props.width });
 
     if (pos === 'up') {
       const newNodes = [...nodes];
-      newNodes.splice(nodeIndex + 1, 0, newNode);
+      newNodes.splice(nodeIndex + 1, 0, laneNode);
 
       const needChangeNodes = nodes.filter(node => node.id.startsWith(id));
       needChangeNodes.forEach(node => {
@@ -50,11 +35,9 @@ const WrapNode = (props) => {
       });
       reactflow.setNodes(newNodes);
     } else {
-      newNode.position.y = props.height;
-      reactflow.addNodes(newNode);
+      laneNode.position.y = props.height;
+      reactflow.addNodes(laneNode);
     }
-
-    laneCountIncrease()
 
     reactflow.updateNode(id, (node) => {
       node.width = props.width;

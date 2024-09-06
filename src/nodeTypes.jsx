@@ -16,7 +16,7 @@ export const nodeTypes = {
   tools: ToolbarNode,
   selecttools: SelectToolbarNode,
   group: GroupNode,
-  swimlanewrap: SwimWrapNode,
+  swimwrap: SwimWrapNode,
   swimlane: SwimLaneNode,
   swimming: SwimNode,
   "parallel-gateway": Parallel,

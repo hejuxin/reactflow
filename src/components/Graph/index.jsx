@@ -29,6 +29,7 @@ import { nodeTypes } from "../../nodeTypes";
 import { FlowContext } from "../../context";
 import { useDrawerParams } from "../../utils/hooks";
 import { getHash } from "../../utils/util";
+import { createSwimLaneNode } from "@/nodes/Swim/common";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -136,58 +137,32 @@ const Graph = () => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-    const id = getHash()
-    const newNode = {
-      id,
-      type,
-      position,
-      // 传入节点 data
-      data: { label: `${type} node` },
-      zIndex: 10
-    };
-
-    setNodes((nodes) => {
-      if (type === 'swimlanewrap') {
-        newNode.style = {
-          border: `1px solid red`,
-          width: wrapWidth,
-          height: wrapHeight
-        }
-        newNode.zIndex = 5;
-        nodes.push(newNode);
-
-        nodes.push({
-          id: `${id}-${laneCount}`,
-          type: 'swimlane',
-          position: {
-            x: titleWidth,
-            y: 0
-          },
-          style: {
-            width: wrapWidth - titleWidth,
-            height: wrapHeight
-          },
-          data: { label: `children node${laneCount}` },
-          parentId: id,
-          // extent: 'parent',
-          draggable: false,
-          zIndex: 6,
-          // expandParent: true
+      if (type === 'swimwrap') {
+        const swimLaneNode = createSwimLaneNode({ position });
+        setNodes(nodes => {
+          return nodes.concat(swimLaneNode);
         })
-
-        laneCountIncrease()
+        newNodeRef.current = swimLaneNode[0];
       } else {
-        nodes.push(newNode);
+        const id = getHash()
+        const newNode = {
+          id,
+          type,
+          position,
+          // 传入节点 data
+          data: { label: `${type} node` },
+          zIndex: 10
+        };
+
+        setNodes((nodes) => {
+          nodes.push(newNode);
+          return [...nodes];
+        })
+        newNodeRef.current = newNode;
       }
-
-      // nodes.push(newNode);
-      return [...nodes];
-    })
-    newNodeRef.current = newNode;
-
-    // newNodeRef.current = newNode;
-    // reactFlowInstance?.addNodes(newNode);
-  }, [reactFlowInstance, nodes, setNodes])
+      // newNodeRef.current = newNode;
+      // reactFlowInstance?.addNodes(newNode);
+    }, [reactFlowInstance, nodes, setNodes])
 
   const onDragOver = (event) => {
     event.preventDefault();
