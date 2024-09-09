@@ -9,6 +9,7 @@ const WrapNode = (props) => {
   const { selected = false, data, id } = props;
   const nodes = useNodes();
   const nodeIndex = nodes.findIndex(node => node.id === id);
+  const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
   const reactflow = useReactFlow();
   const posRef = useRef();
   const startSize = useRef();
@@ -53,7 +54,6 @@ const WrapNode = (props) => {
     }
 
     const node = nodes.find(node => node.id === id);
-    const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
 
     // laneNodes.forEach(node => {
     //   reactflow.updateNode(node.id, (node) => {
@@ -83,8 +83,6 @@ const WrapNode = (props) => {
   }
 
   const handleResizeEnd = e => {
-    const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
-
     // laneNodes.forEach(node => {
     //   reactflow.updateNode(node.id, {
     //     width: width - titleWidth,
@@ -142,14 +140,19 @@ const WrapNode = (props) => {
         return { ...node }
       })
     }
+  }
+  
 
-    
+  const handleDel = () => {
+    reactflow.deleteElements({
+      nodes: [{ id }]
+    })
   }
 
   return (
     <>
       <NodeResizer
-        color="#ff0071"
+        color="#0095ff"
         isVisible={selected}
         minWidth={laneMinWidth + titleWidth}
         // todo
@@ -163,6 +166,7 @@ const WrapNode = (props) => {
       >
         <Button type='link' onClick={() => handleAdd('up')}>向上加一行</Button>
         <Button type='link' onClick={() => handleAdd('down')}>向下加一行</Button>
+        <Button type='link' onClick={handleDel}>删除</Button>
       </NodeToolbar>
       <div className='swinWrap'>
         <div className='title' style={{ width: titleWidth }}>title</div>

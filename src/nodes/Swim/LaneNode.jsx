@@ -13,8 +13,9 @@ const LaneNode = (props) => {
 
   const reactflow = useReactFlow();
   const nodes = useNodes();
-  const nodeIndex = nodes.findIndex(node => node.id === id);
+  const currentNode = reactflow.getNode(id);
   const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
   const isFirstNode = id === laneNodes[0].id;
 
   const { handleResizeStart, handleResize, handleResizeEnd, shouldResize, maxHeight } = useResize(id, parentId);
@@ -54,11 +55,9 @@ const LaneNode = (props) => {
 
   const handleAdd = (pos) => {
     const parentNode = reactflow.getNode(parentId);
-    const currentNode = reactflow.getNode(id);
-
     const positionY = currentNode.position.y;
 
-    const nodeIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+    const currentNodeIndex = nodes.findIndex(node => node.id === id);
 
     const newNodes = [...nodes];
     if (pos === 'up') {
@@ -68,8 +67,8 @@ const LaneNode = (props) => {
         positionY
       });
 
-      newNodes.splice(nodeIndex, 0, laneNode);
-      const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes);
+      newNodes.splice(currentNodeIndex, 0, laneNode);
+      const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
 
       needChangeNodes.forEach(node => {
         reactflow.updateNode(node.id, node => {
@@ -96,8 +95,8 @@ const LaneNode = (props) => {
         positionY: positionY + (currentNode.height ?? currentNode.measured.height)
       });
 
-      newNodes.splice(nodeIndex + 1, 0, laneNode);
-      const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes + 1);
+      newNodes.splice(currentNodeIndex + 1, 0, laneNode);
+      const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes + 1);
 
       needChangeNodes.forEach(node => {
         reactflow.updateNode(node.id, node => {
@@ -116,14 +115,60 @@ const LaneNode = (props) => {
       }, { replace: true })
     }
 
+  }
 
 
+  const handleDel = () => {
+    console.log(currentNode, 'currentNode')
+    reactflow.deleteElements({
+      nodes: [{ id }]
+    });
+
+    const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
+
+    if (isFirstNode) {
+      const needChangeNode = laneNodes[1];
+      reactflow.updateNode(needChangeNode.id, node => {
+        const height = node.height ?? node.measured.height;
+
+        node.height = height + currentNodeHeight;
+        node.position.y = 0;
+        return { ...node }
+      });
+    } else if (id === laneNodes[laneNodes.length - 1].id) {
+      const needChangeNode = laneNodes[laneNodes.length - 2];
+      reactflow.updateNode(needChangeNode.id, node => {
+        const height = node.height ?? node.measured.height;
+
+        node.height = height + currentNodeHeight;
+        return { ...node }
+      });
+    } else {
+      const needChangeNode1 = laneNodes[currentIndexInLaneNodes - 1];
+      const needChangeNode2 = laneNodes[currentIndexInLaneNodes + 1];
+
+      reactflow.updateNode(needChangeNode1.id, node => {
+        const height = node.height ?? node.measured.height;
+
+        node.height = height + (currentNodeHeight / 2);
+        return { ...node }
+      });
+
+      reactflow.updateNode(needChangeNode2.id, node => {
+        const height = node.height ?? node.measured.height;
+        node.height = height + (currentNodeHeight / 2);
+
+        const y = node.position.y;
+        node.position.y = y - (currentNodeHeight / 2);
+        return { ...node }
+      });
+    }
   }
 
   return (
     <div className={cn('laneWrap', { 'noTopborder': isFirstNode })}>
       <NodeResizer
-        color="#ff0071"
+        color="#0095ff"
         isVisible={selected}
         minWidth={laneMinWidth}
         minHeight={laneMinHeight}
@@ -141,6 +186,7 @@ const LaneNode = (props) => {
       >
         <Button type='link' onClick={() => handleAdd('up')}>向上加一行</Button>
         <Button type='link' onClick={() => handleAdd('down')}>向下加一行</Button>
+        <Button type='link' onClick={handleDel}>删除</Button>
       </NodeToolbar>
       {props.data?.label}
     </div>
