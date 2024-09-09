@@ -16,14 +16,15 @@ function laneCountIncrease() {
 function createLane ({
   parentId,
   parentWidth,
-  height
+  height,
+  positionY = 0
 }) {
   const laneNode = {
     id: `${parentId}-${laneCount}`,
     type: 'swimlane',
     position: {
       x: titleWidth,
-      y: 0
+      y: positionY
     },
     style: {
       width: parentWidth - titleWidth,

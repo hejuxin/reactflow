@@ -1,15 +1,18 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
-import { NodeResizer, useNodes, useReactFlow } from '@xyflow/react';
+import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
-import { laneMinHeight, laneMinWidth } from './utils';
+import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth } from './utils';
 import { useResize } from './useResize'
 import './index.less';
+import { Button } from 'antd';
+import { Position } from '@xyflow/react';
 
 const LaneNode = (props) => {
   const { selected = false, id, parentId } = props;
 
   const reactflow = useReactFlow();
   const nodes = useNodes();
+  const nodeIndex = nodes.findIndex(node => node.id === id);
   const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
   const isFirstNode = id === laneNodes[0].id;
 
@@ -39,6 +42,75 @@ const LaneNode = (props) => {
 
   }, [maxHeight]);
 
+
+  const handleAdd = (pos) => {
+    const parentNode = reactflow.getNode(parentId);
+    const currentNode = reactflow.getNode(id);
+
+    const positionY = currentNode.position.y;
+
+    const nodeIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+
+    const newNodes = [...nodes];
+    if (pos === 'up') {
+      const laneNode = createLane({
+        parentId: parentId,
+        parentWidth: parentNode.width ?? parentNode.measured.width,
+        positionY
+      });
+
+      newNodes.splice(nodeIndex, 0, laneNode);
+      const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes);
+      
+      needChangeNodes.forEach(node => {
+        reactflow.updateNode(node.id, node => {
+          const y = node.position.y;
+          node.position.y = y + laneDefalutHeight;
+          return { ...node }
+        });
+      });
+
+      reactflow.setNodes(newNodes);
+
+      reactflow.updateNode(parentId, (node) => {
+        node.width = node.width ?? node.measured.width;
+        node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
+        const y = node.position.y;
+        node.position.y = y - laneDefalutHeight;
+        return { ...node }
+      }, { replace: true })
+
+    } else {
+      const laneNode = createLane({
+        parentId: parentId,
+        parentWidth: parentNode.width ?? parentNode.measured.width,
+        positionY: positionY + (currentNode.height ?? currentNode.measured.height)
+      });
+
+      newNodes.splice(nodeIndex + 1, 0, laneNode);
+      const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes + 1);
+      
+      needChangeNodes.forEach(node => {
+        reactflow.updateNode(node.id, node => {
+          const y = node.position.y;
+          node.position.y = y + laneDefalutHeight;
+          return { ...node }
+        });
+      });
+
+      reactflow.setNodes(newNodes);
+
+      reactflow.updateNode(parentId, (node) => {
+        node.width = node.width ?? node.measured.width;
+        node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
+        return { ...node }
+      }, { replace: true })
+    }
+
+    
+
+  }
+
   return (
     <div className={cn('laneWrap', { 'noTopborder': isFirstNode })}>
       <NodeResizer
@@ -53,6 +125,13 @@ const LaneNode = (props) => {
         onResizeEnd={handleResizeEnd}
         {...resizerprops}
       />
+      <NodeToolbar
+        position={Position.Right}
+        style={{ background: '#fff' }}
+      >
+        <Button type='link' onClick={() => handleAdd('up')}>向上加一行</Button>
+        <Button type='link' onClick={() => handleAdd('down')}>向下加一行</Button>
+      </NodeToolbar>
       {props.data?.label}
     </div>
   )
