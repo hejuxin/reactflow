@@ -369,3 +369,84 @@ export const useResize = (id, parentId) => {
     maxHeight
   }
 }
+
+export const useResizeWrap = id => {
+  const reactflow = useReactFlow();
+  const nodes = useNodes();
+
+  const resizedirectionRef = useRef(initResizedirection);
+  const startSizeRef = useRef();
+  const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
+
+  const handleResizeStart = (e, params) => {
+    startSizeRef.current = {
+      width: params.width,
+      height: params.height
+    }
+
+    const isTop = e.sourceEvent.target.className.includes('top');
+    const isLeft = e.sourceEvent.target.className.includes('left');
+
+    resizedirectionRef.current = {
+      top: isTop,
+      left: isLeft
+    }
+  }
+
+  const handleResizeEnd = e => {
+    const {
+      top: isTop,
+      left: isLeft
+    } = resizedirectionRef.current;
+    const node = nodes.find(node => node.id === id);
+    const width = node.measured.width;
+    const height = node.measured.height;
+    const { width: startWidth, height: startHeight } = startSizeRef.current;
+
+
+    if (startWidth !== width) {
+      if (isLeft) {
+        const diffW = width - startWidth;
+
+        laneNodes.forEach(node => {
+          reactflow.updateNode(node.id, (node) => {
+            node.width = width - titleWidth;
+            node.position.x = titleWidth;
+  
+            return { ...node }
+          })
+        })
+      } else {
+        laneNodes.forEach(node => {
+          reactflow.updateNode(node.id, (node) => {
+            node.width = width - titleWidth;
+            return { ...node }
+          })
+        })
+      }
+    }
+
+    if (startHeight !== height) {
+      const diffH = height - startHeight;
+      if (isTop) {
+        const needChangeNode = laneNodes[0];
+        reactflow.updateNode(needChangeNode.id, node => {
+          const height = node.height ?? node.measured.height;
+          node.height = height + diffH;
+          node.position.y = 0;
+        })
+      } else {
+        const needChangeNode = laneNodes[laneNodes.length - 1];
+        reactflow.updateNode(needChangeNode.id, node => {
+          const height = node.height ?? node.measured.height;
+          node.height = height + diffH;
+        })
+      }
+    }
+  }
+
+  return {
+    handleResizeStart,
+    handleResizeEnd
+  }
+}
