@@ -32,7 +32,7 @@ function createLane ({
     },
     data: { label: `children node${laneCount}` },
     parentId: parentId,
-    extent: 'parent',
+    // extent: 'parent',
     draggable: false,
     zIndex: 6
   }
