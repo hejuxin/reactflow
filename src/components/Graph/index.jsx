@@ -25,7 +25,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode, wrapType } from "@/nodes/Swim/utils";
+import { createSwimLaneNode, deleteLane, laneType, wrapType } from "@/nodes/Swim/utils";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -57,11 +57,11 @@ const Graph = () => {
   const onNodesDelete = useCallback(
     (deleted) => {
       console.log('onNodesDelete', deleted);
-      
+
       if (!reactFlowInstance) return;
       const nodes = reactFlowInstance.getNodes();
       console.log(nodes, 'nodes');
-      
+
       const edges = reactFlowInstance.getEdges();
       reactFlowInstance.setEdges(
         deleted.reduce((acc, node) => {
@@ -86,6 +86,14 @@ const Graph = () => {
           return [...remainingEdges, ...createdEdges];
         }, edges)
       );
+
+
+      if (deleted.length === 1 && deleted[0].type === laneType) {
+        deleteLane({
+          id: deleted[0].id,
+          reactflow: reactFlowInstance
+        })
+      }
     },
     [reactFlowInstance]
   );

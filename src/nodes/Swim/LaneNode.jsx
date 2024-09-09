@@ -1,7 +1,7 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
-import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth } from './utils';
+import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth, deleteLane } from './utils';
 import { useResize } from './useResize'
 import './index.less';
 import { Button } from 'antd';
@@ -19,17 +19,6 @@ const LaneNode = (props) => {
   const isFirstNode = id === laneNodes[0].id;
 
   const { handleResizeStart, handleResize, handleResizeEnd, shouldResize, maxHeight } = useResize(id, parentId);
-
-  useEffect(() => {
-    if (selected) {
-      reactflow.updateNode(id, (node) => {
-        // node.extent = '';
-        const _node = { ...node };
-        delete _node.extent;
-        return _node
-      }, { replace: true })
-    }
-  }, [selected])
 
   useEffect(() => {
     if (pselected && laneNodes.length !== 1) {
@@ -119,50 +108,9 @@ const LaneNode = (props) => {
 
 
   const handleDel = () => {
-    console.log(currentNode, 'currentNode')
     reactflow.deleteElements({
       nodes: [{ id }]
     });
-
-    const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
-
-    if (isFirstNode) {
-      const needChangeNode = laneNodes[1];
-      reactflow.updateNode(needChangeNode.id, node => {
-        const height = node.height ?? node.measured.height;
-
-        node.height = height + currentNodeHeight;
-        node.position.y = 0;
-        return { ...node }
-      });
-    } else if (id === laneNodes[laneNodes.length - 1].id) {
-      const needChangeNode = laneNodes[laneNodes.length - 2];
-      reactflow.updateNode(needChangeNode.id, node => {
-        const height = node.height ?? node.measured.height;
-
-        node.height = height + currentNodeHeight;
-        return { ...node }
-      });
-    } else {
-      const needChangeNode1 = laneNodes[currentIndexInLaneNodes - 1];
-      const needChangeNode2 = laneNodes[currentIndexInLaneNodes + 1];
-
-      reactflow.updateNode(needChangeNode1.id, node => {
-        const height = node.height ?? node.measured.height;
-
-        node.height = height + (currentNodeHeight / 2);
-        return { ...node }
-      });
-
-      reactflow.updateNode(needChangeNode2.id, node => {
-        const height = node.height ?? node.measured.height;
-        node.height = height + (currentNodeHeight / 2);
-
-        const y = node.position.y;
-        node.position.y = y - (currentNodeHeight / 2);
-        return { ...node }
-      });
-    }
   }
 
   return (

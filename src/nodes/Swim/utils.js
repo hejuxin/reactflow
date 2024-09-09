@@ -78,11 +78,61 @@ function createSwimLaneNode({
   return [wrapNode, laneNode];
 }
 
+function deleteLane ({ id, reactflow }) {
+  const currentNode = reactflow.getNode(id);
+  const parentId = currentNode.parentId;
+  const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
+
+  const nodes = reactflow.getNodes();
+  const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+  const isFirstNode = id === laneNodes[0].id;
+  if (isFirstNode) {
+    const needChangeNode = laneNodes[1];
+    reactflow.updateNode(needChangeNode.id, node => {
+      const height = node.height ?? node.measured.height;
+
+      node.height = height + currentNodeHeight;
+      node.position.y = 0;
+      return { ...node }
+    });
+  } else if (id === laneNodes[laneNodes.length - 1].id) {
+    const needChangeNode = laneNodes[laneNodes.length - 2];
+    reactflow.updateNode(needChangeNode.id, node => {
+      const height = node.height ?? node.measured.height;
+
+      node.height = height + currentNodeHeight;
+      return { ...node }
+    });
+  } else {
+    const needChangeNode1 = laneNodes[currentIndexInLaneNodes - 1];
+    const needChangeNode2 = laneNodes[currentIndexInLaneNodes + 1];
+
+    reactflow.updateNode(needChangeNode1.id, node => {
+      const height = node.height ?? node.measured.height;
+
+      node.height = height + (currentNodeHeight / 2);
+      return { ...node }
+    });
+
+    reactflow.updateNode(needChangeNode2.id, node => {
+      const height = node.height ?? node.measured.height;
+      node.height = height + (currentNodeHeight / 2);
+
+      const y = node.position.y;
+      node.position.y = y - (currentNodeHeight / 2);
+      return { ...node }
+    });
+  }
+
+}
+
 export {
   createSwimLaneNode,
   createLane,
   laneMinWidth,
   laneMinHeight,
   laneDefalutHeight,
-  titleWidth
+  titleWidth,
+  deleteLane
 }
