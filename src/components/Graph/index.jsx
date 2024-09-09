@@ -18,8 +18,6 @@ import {
   ControlButton,
   ReactFlow,
   ReactFlowProvider,
-  useEdgesState,
-  useNodesState,
 } from "@xyflow/react";
 import { nodes as initialNodes, edges as initialEdges } from "@/mock";
 import "@xyflow/react/dist/style.css";
@@ -42,22 +40,31 @@ const Graph = () => {
     DrawerParams.showModal(value);
   };
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  useEffect(() => {
+    if (reactFlowInstance) {
+      reactFlowInstance.setNodes(initialNodes)
+      reactFlowInstance.setEdges(initialEdges)
+    }
+  }, [reactFlowInstance]);
 
   const onConnect = useCallback(
     (params) => {
-      console.log("onConnect");
-      setEdges((eds) => addEdge(params, eds));
+      console.log("onConnect", params);
+      reactFlowInstance?.setEdges((eds) => addEdge(params, eds));
     },
-    [setEdges]
+    [reactFlowInstance]
   );
 
   const onNodesDelete = useCallback(
     (deleted) => {
-      console.log(deleted, "deleted", nodes, edges);
-      setEdges(
+      console.log('onNodesDelete', deleted);
+      
+      if (!reactFlowInstance) return;
+      const nodes = reactFlowInstance.getNodes();
+      console.log(nodes, 'nodes');
+      
+      const edges = reactFlowInstance.getEdges();
+      reactFlowInstance.setEdges(
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodes, edges);
           const outgoers = getOutgoers(node, nodes, edges);
@@ -81,34 +88,22 @@ const Graph = () => {
         }, edges)
       );
     },
-    [nodes, edges]
+    [reactFlowInstance]
   );
 
   const handleDel = (value) => {
     const { id } = value;
 
-    const newNodes = [...nodes];
-    const index = nodes.findIndex((node) => node.id === id);
-    if (index !== -1) {
-      newNodes.splice(index, 1);
-    }
-
-    setNodes(newNodes);
-
-    // 手动执行
-    onNodesDelete([value]);
+    reactFlowInstance.deleteElements({
+      nodes: [{ id }]
+    })
   };
 
   const handleSubmit = () => {
     const value = form.getFieldsValue();
-    console.log(value, "value");
-
     const { id } = DrawerParams.params;
 
-    const newNodes = [...nodes];
-    const index = nodes.findIndex((node) => node.id === id);
-    newNodes[index].data.label = value.title;
-    setNodes([...newNodes]);
+    reactFlowInstance.updateNodeData(id, { label: value.title })
     DrawerParams.hideModal();
   };
 
@@ -138,9 +133,8 @@ const Graph = () => {
 
       if (type === 'swimwrap') {
         const swimLaneNode = createSwimLaneNode({ position });
-        setNodes(nodes => {
-          return nodes.concat(swimLaneNode);
-        })
+
+        reactFlowInstance.addNodes(swimLaneNode)
         newNodeRef.current = swimLaneNode[0];
       } else {
         const id = getHash()
@@ -153,15 +147,12 @@ const Graph = () => {
           zIndex: 10
         };
 
-        setNodes((nodes) => {
-          nodes.push(newNode);
-          return [...nodes];
-        })
+        reactFlowInstance.addNodes(newNode)
         newNodeRef.current = newNode;
       }
       // newNodeRef.current = newNode;
       // reactFlowInstance?.addNodes(newNode);
-    }, [reactFlowInstance, nodes, setNodes])
+    }, [reactFlowInstance])
 
   const onDragOver = (event) => {
     event.preventDefault();
@@ -174,7 +165,6 @@ const Graph = () => {
   };
 
   const handleNodesChange = (...p) => {
-    onNodesChange(...p)
     const info = p[0][0];
 
     // 当类型为尺寸变化时
@@ -211,7 +201,6 @@ const Graph = () => {
       }
 
       const id = info.id;
-      const node = nodes.find(node => node.id === id);
 
       // if (node.type === 'swimlanewrap') {
       //   const { width } = node;
@@ -254,12 +243,13 @@ const Graph = () => {
       >
         <ReactFlowProvider>
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            // nodes={nodes}
+            defaultNodes={[]}
+            defaultEdges={[]}
             fitView
             onNodesChange={handleNodesChange}
             onNodesDelete={onNodesDelete}
-            onEdgesChange={onEdgesChange}
+            // onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
             onDragOver={onDragOver}
