@@ -8,7 +8,8 @@ import { Button } from 'antd';
 import { Position } from '@xyflow/react';
 
 const LaneNode = (props) => {
-  const { selected = false, id, parentId } = props;
+  const { selected: pselected = false, id, parentId } = props;
+  const [selected, setSelected] = useState(false);
 
   const reactflow = useReactFlow();
   const nodes = useNodes();
@@ -28,6 +29,14 @@ const LaneNode = (props) => {
       }, { replace: true })
     }
   }, [selected])
+
+  useEffect(() => {
+    if (pselected && laneNodes.length !== 1) {
+      setSelected(true);
+      return;
+    }
+    setSelected(false);
+  }, [pselected, laneNodes])
 
   const resizerprops = useMemo(() => {
     const newProps = {};
@@ -61,7 +70,7 @@ const LaneNode = (props) => {
 
       newNodes.splice(nodeIndex, 0, laneNode);
       const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes);
-      
+
       needChangeNodes.forEach(node => {
         reactflow.updateNode(node.id, node => {
           const y = node.position.y;
@@ -89,7 +98,7 @@ const LaneNode = (props) => {
 
       newNodes.splice(nodeIndex + 1, 0, laneNode);
       const needChangeNodes = laneNodes.slice(nodeIndexInLaneNodes + 1);
-      
+
       needChangeNodes.forEach(node => {
         reactflow.updateNode(node.id, node => {
           const y = node.position.y;
@@ -107,7 +116,7 @@ const LaneNode = (props) => {
       }, { replace: true })
     }
 
-    
+
 
   }
 
@@ -126,6 +135,7 @@ const LaneNode = (props) => {
         {...resizerprops}
       />
       <NodeToolbar
+        isVisible={selected}
         position={Position.Right}
         style={{ background: '#fff' }}
       >
