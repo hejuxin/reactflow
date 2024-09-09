@@ -9,6 +9,9 @@ let laneDefalutHeight = 200;
 const laneMinHeight = laneDefalutHeight / 2;
 const laneMinWidth = 300;
 
+export const wrapType = 'swimwrap';
+export const laneType = 'swimlane';
+
 function laneCountIncrease() {
   laneCount++
 }
@@ -21,7 +24,7 @@ function createLane ({
 }) {
   const laneNode = {
     id: `${parentId}-${laneCount}`,
-    type: 'swimlane',
+    type: laneType,
     position: {
       x: titleWidth,
       y: positionY
@@ -47,7 +50,7 @@ function createWrap ({
   id
 }) {
   const nodeId = id ?? getHash();
-  const type = 'swimwrap';
+  const type = wrapType;
   const wrapNode = {
     id: nodeId,
     type,

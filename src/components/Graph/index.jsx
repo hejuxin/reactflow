@@ -15,7 +15,6 @@ import {
   getOutgoers,
   MiniMap,
   Controls,
-  ControlButton,
   ReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
@@ -26,7 +25,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode } from "@/nodes/Swim/utils";
+import { createSwimLaneNode, wrapType } from "@/nodes/Swim/utils";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -131,7 +130,7 @@ const Graph = () => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      if (type === 'swimwrap') {
+      if (type === wrapType) {
         const swimLaneNode = createSwimLaneNode({ position });
 
         reactFlowInstance.addNodes(swimLaneNode)
