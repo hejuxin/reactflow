@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { titleWidth, laneMinHeight } from "./utils";
+import { titleWidth, laneMinHeight, laneType } from "./utils";
 
 const getHeight = node => {
   return node.measured.height;
@@ -255,6 +255,17 @@ export const useResize = (id, parentId) => {
             node.position.y = y + diffH;
           })
         })
+
+        const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
+        const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+
+        normalNodes.forEach(intersectingNode => {
+          reactflow.updateNode(intersectingNode.id, (node) => {
+            const y = node.position.y;
+            node.position.y = y + diffH;
+          })
+        })
+        
 
         // todo 逻辑优化
         // laneNodes.forEach((laneNode, index) => {
