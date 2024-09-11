@@ -26,6 +26,7 @@ import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
 import { createSwimLaneNode, deleteLane, laneType, wrapType } from "@/nodes/Swim/utils";
+import { getData } from "@/service";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -287,7 +288,8 @@ const Graph = () => {
       </Drawer>
       <Button
         onClick={() => {
-          console.log(reactFlowInstance.toObject());
+          // console.log(reactFlowInstance.toObject());
+          getData()
         }}
       >
         output
