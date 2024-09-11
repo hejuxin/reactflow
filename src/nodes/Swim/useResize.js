@@ -76,9 +76,15 @@ export const useResize = (id, parentId) => {
     const direction = getControlDirection(className);
     resizedirectionRef.current = direction;
 
-    // 记录当前子泳道的交叉node
-    const intersectingNodes = reactflow.getIntersectingNodes({ id }, true);
-    intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== wrapType);
+    if (direction.isHorizontal) {
+      // 若横向有变化，记录的是容器的交叉node
+      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
+      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== laneType);
+    } else {
+      // 记录当前子泳道的交叉node
+      const intersectingNodes = reactflow.getIntersectingNodes({ id }, true);
+      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== wrapType);
+    }
 
     // if (isTop) {
     //   if (isFirstNode) return;
