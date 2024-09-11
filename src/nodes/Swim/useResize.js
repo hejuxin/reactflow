@@ -259,94 +259,40 @@ export const useResize = (id, parentId) => {
           const newLeft = reactflow.getNode(parentId).x - diff;
           const newRight = newLeft + newWidth + titleWidth;
 
-          // if (newRight < maxX) {
-          //   return;
-          // }
-
-          reactflow.updateNode(id, node => {
-            node.width = newWidth;
-            node.position.x = titleWidth;
-          })
-
           // 更新容器的高度和位置
           reactflow.updateNode(parentId, (node) => {
             node.width = newWidth + titleWidth;
+
             const x = node.position.x;
-            node.position.x = x - diff;
-          })
+            const newx = x - diff;
+            node.position.x = newx;
 
-          // 更新所有除子泳道的node的位置
-          const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-          const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
-
-          normalNodes.forEach(intersectingNode => {
-            reactflow.updateNode(intersectingNode.id, (node) => {
-              const x = node.position.x;
-              node.position.x = x + diff;
+            handleWrapWidthChangeEffect({
+              width: newWidth + titleWidth,
+              oldx: x,
+              newx
             })
           })
 
-          laneNodes.filter(node => node.id !== id).forEach(laneNode => {
-            reactflow.updateNode(laneNode.id, (node) => {
-              node.width = newWidth;
-              node.position.x = titleWidth;
-            })
-          })
-
+          
           return;
         }
       }
-      const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId));
-
-
-      reactflow.updateNode(id, node => {
-        node.position.x = titleWidth;
-      })
-
-      laneNodes.filter(node => node.id !== id).forEach(node => {
-        reactflow.updateNode(node.id, node => {
-          node.width = width;
-          node.position.x = titleWidth;
-        })
-      })
-
 
       reactflow.updateNode(parentId, node => {
-        const x = node.position.x;
-
         node.width = width + titleWidth;
-        node.position.x = x - diffW;
-      })
+        const x = node.position.x;
+        const newx = x - diffW;
+        node.position.x = newx;
 
-      // 更新所有除子泳道的node的位置
-      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-      const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
-
-      normalNodes.forEach(node => {
-        reactflow.updateNode(node.id, node => {
-          const x = node.position.x;
-
-          node.position.x = x + diffW;
+        handleWrapWidthChangeEffect({
+          width: width + titleWidth,
+          oldx: x,
+          newx
         })
       })
 
-      // 左侧拖拽缩放时，需更改父级的x定位
-      // 对于所有子泳道，需修改重新x定位。包括自身
-      // needChangeNodes.forEach(needChangeNode => {
-      //   reactflow.updateNode(needChangeNode.id, (node) => {
-      //     const x = node.position.x;
-
-      //     if (node.id === parentId) {
-      //       node.width = width + titleWidth;
-      //       node.position.x = x - diffW;
-      //     } else {
-      //       if (node.id !== id) {
-      //         node.width = width;
-      //       }
-      //       node.position.x = titleWidth;
-      //     }
-      //   })
-      // })
+      
     } else {
       if (diffW < 0) {
         const intersectingNodes = intersectingNodesRef.current;
@@ -374,35 +320,25 @@ export const useResize = (id, parentId) => {
           //   return;
           // }
 
-          reactflow.updateNode(id, node => {
-            node.width = newWidth;
-          })
+          // reactflow.updateNode(id, node => {
+          //   node.width = newWidth;
+          // })
 
           // 更新容器的高度和位置
           reactflow.updateNode(parentId, (node) => {
             node.width = newWidth + titleWidth;
-          })
-
-          laneNodes.filter(node => node.id !== id).forEach(laneNode => {
-            reactflow.updateNode(laneNode.id, (node) => {
-              node.width = newWidth;
-              node.position.x = titleWidth;
+            handleWrapWidthChangeEffect({
+              width: newWidth + titleWidth
             })
           })
-
-
 
           return;
         }
       }
-      const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== id);
-      needChangeNodes.forEach(needChangeNode => {
-        reactflow.updateNode(needChangeNode.id, (node) => {
-          if (node.id === parentId) {
-            node.width = width + titleWidth;
-          } else {
-            node.width = width;
-          }
+      reactflow.updateNode(parentId, node => {
+        node.width = width + titleWidth;
+        handleWrapWidthChangeEffect({
+          width: width + titleWidth
         })
       })
     }
@@ -671,6 +607,32 @@ export const useResize = (id, parentId) => {
 
     if (startHeight !== height) {
       onHeightChange();
+    }
+  }
+
+  const handleWrapWidthChangeEffect = ({ width, oldx = 0, newx = 0 }) => {
+    const isPositionChange = (newx - oldx) !== 0;
+    laneNodes.forEach(laneNode => {
+      reactflow.updateNode(laneNode.id, (node) => {
+        node.width = width - titleWidth;
+        if (isPositionChange) {
+          node.position.x = titleWidth;
+        }
+      })
+    })
+
+    if (isPositionChange) {
+      // 更新所有除子泳道的node的位置
+      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true).filter(node => node.type !== laneType && node.parentId === parentId);
+
+      intersectingNodes.forEach(intersectingNode => {
+        reactflow.updateNode(intersectingNode.id, (node) => {
+          const x = node.position.x;
+          const diff = newx - oldx;
+          node.position.x = x - diff;
+          // node.origin = [0, 0];
+        })
+      })
     }
   }
 
