@@ -10,6 +10,27 @@ const initResizedirection = {
   top: false,
   left: false
 }
+
+const initiationDirection = {
+  isHorizontal: false,
+  isVertical: false,
+  affectsLeft: false,
+  affectsTop: false,
+}
+
+function getControlDirection(controlPosition) {
+  const isHorizontal = controlPosition.includes('right') || controlPosition.includes('left');
+  const isVertical = controlPosition.includes('bottom') || controlPosition.includes('top');
+  const affectsLeft = controlPosition.includes('left');
+  const affectsTop = controlPosition.includes('top');
+
+  return {
+    isHorizontal,
+    isVertical,
+    affectsLeft,
+    affectsTop,
+  };
+}
 // export const useResize = (reactflow) => {
 export const useResize = (id, parentId) => {
   const reactflow = useReactFlow();
@@ -17,7 +38,7 @@ export const useResize = (id, parentId) => {
   const nodes = useNodes();
   const [maxHeight, setMaxHeight] = useState();
 
-  const resizedirectionRef = useRef(initResizedirection);
+  const resizedirectionRef = useRef(initiationDirection);
 
   // 记录开始的width和height
   const startSizeRef = useRef();
@@ -50,16 +71,10 @@ export const useResize = (id, parentId) => {
       height: params.height
     }
 
-    const isTop = e.sourceEvent.target.className.includes('top');
-    const isLeft = e.sourceEvent.target.className.includes('left');
+    const className = e.sourceEvent.target.className;
+    const direction = getControlDirection(className);
 
-    resizedirectionRef.current = {
-      top: isTop,
-      left: isLeft
-    }
-
-
-
+    resizedirectionRef.current = direction;
 
     // if (isTop) {
     //   if (isFirstNode) return;
@@ -93,11 +108,16 @@ export const useResize = (id, parentId) => {
    * @returns 
    */
   const computeMaxHeight = (currentNode) => {
-    const { top: isTop } = resizedirectionRef.current;
+    const {
+      isVertical,
+      affectsTop,
+    } = resizedirectionRef.current;
+    const isTopDirection = isVertical && affectsTop;
+    const isBottomDirection = isVertical && !affectsTop;
     // 第一个子节点向上缩放时，没有最大高度限制
-    if (isFirstNode && isTop) return;
+    if (isFirstNode && isTopDirection) return;
     // 最后一个子节点向下缩放时，没有最大高度限制
-    if (isLastNode && !isTop) return;
+    if (isLastNode && isBottomDirection) return;
 
     const index = laneNodes.findIndex(node => node.id === id);
 
@@ -108,7 +128,7 @@ export const useResize = (id, parentId) => {
     // }, { replace: true })
 
     // 向上缩放时，需获取上一个子泳道的高度
-    if (isTop && !isFirstNode) {
+    if (isTopDirection && !isFirstNode) {
       // 获取上一个子泳道
       const needChangeNode = laneNodes[index - 1];
       // 获取上一个子泳道的高度
@@ -124,7 +144,7 @@ export const useResize = (id, parentId) => {
       return;
     }
 
-    if (!isTop && !isLastNode) {
+    if (isBottomDirection && !isLastNode) {
       const needChangeNode = laneNodes[index + 1];
       const needChangeNodeHeight = needChangeNode.height ?? needChangeNode.measured.height;
       const diffMaxH = needChangeNodeHeight - laneMinHeight;
@@ -137,12 +157,16 @@ export const useResize = (id, parentId) => {
   }
 
   const handleResize = e => {
-    const { top: isTop } = resizedirectionRef.current;
+    const {
+      isVertical,
+      affectsTop,
+    } = resizedirectionRef.current;
+
     const maxHeight = boundariesRef.current.maxHeight;
     // 第一个子节点向上缩放时，没有最大高度限制
-    if (isFirstNode && isTop) return;
+    if (isFirstNode && isVertical && affectsTop) return;
     // 最后一个子节点向下缩放时，没有最大高度限制
-    if (isLastNode && !isTop) return;
+    if (isLastNode && isVertical && !affectsTop) return;
 
 
     // const { width: startWidth, height: startHeight } = startSizeRef.current;
@@ -206,7 +230,12 @@ export const useResize = (id, parentId) => {
    * @returns 
    */
   const handleResizeEnd = (e, params) => {
-    const { top: isTop, left: isLeft } = resizedirectionRef.current;
+    const {
+      isHorizontal,
+      isVertical,
+      affectsLeft,
+      affectsTop,
+    } = resizedirectionRef.current;
     const currentNode = reactflow.getNode(id);
 
     const width = currentNode.measured.width;
@@ -214,7 +243,8 @@ export const useResize = (id, parentId) => {
     const { width: startWidth, height: startHeight } = startSizeRef.current;
 
     if (startWidth !== width) {
-      if (isLeft) {
+      const isLeftDirection = isHorizontal && affectsLeft;
+      if (isLeftDirection) {
         const diffW = width - startWidth;
         const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId));
         // 左侧拖拽缩放时，需更改父级的x定位
@@ -251,8 +281,10 @@ export const useResize = (id, parentId) => {
 
     if (startHeight !== height) {
       const diffH = height - startHeight;
+      const isTopDirection = isVertical && affectsTop;
+      const isBottomDirection = isVertical && !affectsTop;
       // 第一个子节点，且拖拽的是上边框
-      if (isFirstNode && isTop) {
+      if (isFirstNode && isTopDirection) {
         reactflow.updateNode(parentId, (node) => {
           const height = getHeight(node);
 
@@ -278,7 +310,7 @@ export const useResize = (id, parentId) => {
             node.position.y = y + diffH;
           })
         })
-        
+
 
         // todo 逻辑优化
         // laneNodes.forEach((laneNode, index) => {
@@ -299,7 +331,7 @@ export const useResize = (id, parentId) => {
       }
 
       // 最后一个子节点，且拖拽的是下边框
-      if (isLastNode && !isTop) {
+      if (isLastNode && isBottomDirection) {
         reactflow.updateNode(parentId, (node) => {
           const height = getHeight(node);
           node.height = height + diffH;
@@ -316,7 +348,7 @@ export const useResize = (id, parentId) => {
       // }, { replace: true })
 
       const index = laneNodes.findIndex(node => node.id === id);
-      if (isTop) {
+      if (isTopDirection) {
         const needChangeNode = laneNodes[index - 1];
         const currentNodeHeight = startHeight;
         const needChangeNodeHeight = getHeight(needChangeNode);
@@ -351,14 +383,14 @@ export const useResize = (id, parentId) => {
               const diff = clientHeight - maxHeight;
               const clientY = node.position.y;
               node.position.y = clientY + diff;
-              
+
             }
           }
         })
 
         return;
       }
-      if (!isTop) {
+      if (isBottomDirection) {
         const needChangeNode = laneNodes[index + 1];
         const needChangeNodeHeight = needChangeNode.height ?? getHeight(needChangeNode);
         const newHeight = needChangeNodeHeight - diffH;
