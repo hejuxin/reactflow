@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { titleWidth, laneMinHeight, laneType } from "./utils";
+import { titleWidth, laneMinHeight, laneMinWidth, laneType } from "./utils";
 
 const getHeight = node => {
   return node.measured.height;
@@ -19,12 +19,23 @@ export const useResize = (id, parentId) => {
 
   const resizedirectionRef = useRef(initResizedirection);
 
+  // 记录开始的width和height
   const startSizeRef = useRef();
-  const maxHeightRef = useRef();
+
+  // 边界
+  const boundariesRef = useRef({
+    minWidth: laneMinWidth,
+    minHeight: laneMinHeight,
+  });
 
   const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
   const isFirstNode = id === laneNodes[0].id;
   const isLastNode = id === laneNodes[laneNodes.length - 1].id;
+
+
+  const setBoundaries = (key, value) => {
+    boundariesRef.current[key] = value;
+  }
 
   /**
    * 用于记录移动前的数据
@@ -67,10 +78,10 @@ export const useResize = (id, parentId) => {
     computeMaxHeight(currentNode);
     console.log(currentNode.position.y, 0, currentNode);
 
-    console.log(maxHeightRef.current, 'maxHeightRef.current')
-    // if (maxHeightRef.current) {
+    // const maxHeight = boundariesRef.current.maxHeight;
+    // if (maxHeight) {
     //   reactflow.updateNode(id, (node) => {
-    //     node.maxHeight = maxHeightRef.current;
+    //     node.maxHeight = maxHeight;
     //     return { ...node }
     //   })
     // }
@@ -105,7 +116,8 @@ export const useResize = (id, parentId) => {
       // 计算可放大的最大落差高度
       const diffMaxH = needChangeNodeHeight - laneMinHeight;
       const currentNodeMaxHeight = (currentNode.height ?? currentNode.measured.height) + diffMaxH;
-      maxHeightRef.current = currentNodeMaxHeight;
+
+      setBoundaries('maxHeight', currentNodeMaxHeight);
       setMaxHeight(() => currentNodeMaxHeight)
 
 
@@ -117,7 +129,7 @@ export const useResize = (id, parentId) => {
       const needChangeNodeHeight = needChangeNode.height ?? needChangeNode.measured.height;
       const diffMaxH = needChangeNodeHeight - laneMinHeight;
       const currentNodeMaxHeight = (currentNode.height ?? currentNode.measured.height) + diffMaxH;
-      maxHeightRef.current = currentNodeMaxHeight;
+      setBoundaries('maxHeight', currentNodeMaxHeight);
       setMaxHeight(() => currentNodeMaxHeight)
 
       return;
@@ -126,6 +138,7 @@ export const useResize = (id, parentId) => {
 
   const handleResize = e => {
     const { top: isTop } = resizedirectionRef.current;
+    const maxHeight = boundariesRef.current.maxHeight;
     // 第一个子节点向上缩放时，没有最大高度限制
     if (isFirstNode && isTop) return;
     // 最后一个子节点向下缩放时，没有最大高度限制
@@ -138,9 +151,9 @@ export const useResize = (id, parentId) => {
     // if (isTop && !isFirstNode) {
     //   const currentNode = reactflow.getNode(id);
     //   console.log(currentNode.position.y, 1, currentNode)
-    //   if (currentNode.measured.height > maxHeightRef.current) {
+    //   if (currentNode.measured.height > maxHeight) {
     //     // reactflow.updateNode(id, (node) => {
-    //     //   node.maxHeight = maxHeightRef.current;
+    //     //   node.maxHeight = maxHeight;
     //     //   return { ...node }
     //     // }, { replace: true })
     //     // console.log(currentNode.position.y, 2, currentNode)
@@ -149,7 +162,7 @@ export const useResize = (id, parentId) => {
 
 
     //     // reactflow.updateNode(id, (node) => {
-    //     //     node.height = maxHeightRef.current;
+    //     //     node.height = maxHeight;
     //     //     return { ...node }
     //     //   }, { replace: true })
 
@@ -168,7 +181,7 @@ export const useResize = (id, parentId) => {
     //       return { ...node }
     //     })
 
-    //     maxHeightRef.current = currentNodeMaxHeight;
+    //     setBoundaries('maxHeight', currentNodeMaxHeight);
     //     return false;
     //   }
 
@@ -327,14 +340,15 @@ export const useResize = (id, parentId) => {
         reactflow.updateNode(id, node => {
           if (diffH > 0) {
             const clientHeight = node.height;
+            const maxHeight = boundariesRef.current.maxHeight;
 
             // 超出最大高度时的处理
-            if (clientHeight > maxHeightRef.current) {
+            if (clientHeight > maxHeight) {
               // 将高度设为最大高度
-              node.height = maxHeightRef.current;
+              node.height = maxHeight;
 
               // 处理y
-              const diff = clientHeight - maxHeightRef.current;
+              const diff = clientHeight - maxHeight;
               const clientY = node.position.y;
               node.position.y = clientY + diff;
               
@@ -368,10 +382,12 @@ export const useResize = (id, parentId) => {
           if (diffH > 0) {
             const clientHeight = node.height;
 
+            const maxHeight = boundariesRef.current.maxHeight;
+
             // 超出最大高度时的处理
-            if (clientHeight > maxHeightRef.current) {
+            if (clientHeight > maxHeight) {
               // 将高度设为最大高度
-              node.height = maxHeightRef.current;
+              node.height = maxHeight;
             }
           }
         })
