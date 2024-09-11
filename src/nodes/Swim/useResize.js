@@ -95,7 +95,7 @@ export const useResize = (id, parentId) => {
     // }
 
     computeMaxHeight(currentNode);
-    console.log(currentNode.position.y, 0, currentNode);
+    // console.log(currentNode.position.y, 0, currentNode);
 
     // const maxHeight = boundariesRef.current.maxHeight;
     // if (maxHeight) {
@@ -231,31 +231,170 @@ export const useResize = (id, parentId) => {
   const onWidthChange = () => {
     const { isHorizontal, affectsLeft } = resizedirectionRef.current;
     const isLeftDirection = isHorizontal && affectsLeft;
-    if (isLeftDirection) {
-      const width = currentNode.measured.width;
-      const { width: startWidth } = startSizeRef.current;
 
-      const diffW = width - startWidth;
+    const width = currentNode.measured.width;
+    const { width: startWidth, x: startX } = startSizeRef.current;
+    const diffW = width - startWidth;
+
+    if (isLeftDirection) {
+      if (diffW < 0) {
+        const intersectingNodes = intersectingNodesRef.current;
+        // 获取最小的x,即最左的x
+        const positionXArr = intersectingNodes.map(node => ({ left: node.position.x, right: node.position.x + (node.width ?? node.measured.width) }));
+        const positionLeftArr = positionXArr.map(postion => postion.left);
+        const positionRightArr = positionXArr.map(postion => postion.right);
+        const minX = Math.min(...positionLeftArr);
+        const maxX = Math.max(...positionRightArr);
+
+        const maxDiffWidth = Math.abs(startX - minX);
+        let newWidth = width;
+        const newMinWidth = startWidth - maxDiffWidth;
+        const currentMinWidth = boundariesRef.current.minWidth;
+        const minWidth = newMinWidth > currentMinWidth ? newMinWidth : currentMinWidth;
+
+        if (newWidth < minWidth) {
+          newWidth = minWidth;
+          let diff = newWidth - startWidth;
+
+          const newLeft = reactflow.getNode(parentId).x - diff;
+          const newRight = newLeft + newWidth + titleWidth;
+
+          // if (newRight < maxX) {
+          //   return;
+          // }
+
+          reactflow.updateNode(id, node => {
+            node.width = newWidth;
+            node.position.x = titleWidth;
+          })
+
+          // 更新容器的高度和位置
+          reactflow.updateNode(parentId, (node) => {
+            node.width = newWidth + titleWidth;
+            const x = node.position.x;
+            node.position.x = x - diff;
+          })
+
+          // 更新所有除子泳道的node的位置
+          const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
+          const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+
+          normalNodes.forEach(intersectingNode => {
+            reactflow.updateNode(intersectingNode.id, (node) => {
+              const x = node.position.x;
+              node.position.x = x + diff;
+            })
+          })
+
+          laneNodes.filter(node => node.id !== id).forEach(laneNode => {
+            reactflow.updateNode(laneNode.id, (node) => {
+              node.width = newWidth;
+              node.position.x = titleWidth;
+            })
+          })
+
+          return;
+        }
+      }
       const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId));
+
+
+      reactflow.updateNode(id, node => {
+        node.position.x = titleWidth;
+      })
+
+      laneNodes.filter(node => node.id !== id).forEach(node => {
+        reactflow.updateNode(node.id, node => {
+          node.width = width;
+          node.position.x = titleWidth;
+        })
+      })
+
+
+      reactflow.updateNode(parentId, node => {
+        const x = node.position.x;
+
+        node.width = width + titleWidth;
+        node.position.x = x - diffW;
+      })
+
+      // 更新所有除子泳道的node的位置
+      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
+      const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+
+      normalNodes.forEach(node => {
+        reactflow.updateNode(node.id, node => {
+          const x = node.position.x;
+
+          node.position.x = x + diffW;
+        })
+      })
 
       // 左侧拖拽缩放时，需更改父级的x定位
       // 对于所有子泳道，需修改重新x定位。包括自身
-      needChangeNodes.forEach(needChangeNode => {
-        reactflow.updateNode(needChangeNode.id, (node) => {
-          const x = node.position.x;
+      // needChangeNodes.forEach(needChangeNode => {
+      //   reactflow.updateNode(needChangeNode.id, (node) => {
+      //     const x = node.position.x;
 
-          if (node.id === parentId) {
-            node.width = width + titleWidth;
-            node.position.x = x - diffW;
-          } else {
-            if (node.id !== id) {
-              node.width = width;
-            }
-            node.position.x = titleWidth;
-          }
-        })
-      })
+      //     if (node.id === parentId) {
+      //       node.width = width + titleWidth;
+      //       node.position.x = x - diffW;
+      //     } else {
+      //       if (node.id !== id) {
+      //         node.width = width;
+      //       }
+      //       node.position.x = titleWidth;
+      //     }
+      //   })
+      // })
     } else {
+      if (diffW < 0) {
+        const intersectingNodes = intersectingNodesRef.current;
+        // 获取最小的x,即最左的x
+        const positionXArr = intersectingNodes.map(node => ({ left: node.position.x, right: node.position.x + (node.width ?? node.measured.width) }));
+        const positionLeftArr = positionXArr.map(postion => postion.left);
+        const positionRightArr = positionXArr.map(postion => postion.right);
+        const minX = Math.min(...positionLeftArr);
+        const maxX = Math.max(...positionRightArr);
+
+        const maxDiffWidth = Math.abs((startX + startWidth) - maxX);
+        let newWidth = width;
+        const newMinWidth = startWidth - maxDiffWidth;
+        const currentMinWidth = boundariesRef.current.minWidth;
+        const minWidth = newMinWidth > currentMinWidth ? newMinWidth : currentMinWidth;
+
+        if (newWidth < minWidth) {
+          newWidth = minWidth;
+          let diff = newWidth - startWidth;
+
+          const newLeft = reactflow.getNode(parentId).x - diff;
+          const newRight = newLeft + newWidth + titleWidth;
+
+          // if (newRight < maxX) {
+          //   return;
+          // }
+
+          reactflow.updateNode(id, node => {
+            node.width = newWidth;
+          })
+
+          // 更新容器的高度和位置
+          reactflow.updateNode(parentId, (node) => {
+            node.width = newWidth + titleWidth;
+          })
+
+          laneNodes.filter(node => node.id !== id).forEach(laneNode => {
+            reactflow.updateNode(laneNode.id, (node) => {
+              node.width = newWidth;
+              node.position.x = titleWidth;
+            })
+          })
+
+
+
+          return;
+        }
+      }
       const needChangeNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== id);
       needChangeNodes.forEach(needChangeNode => {
         reactflow.updateNode(needChangeNode.id, (node) => {
