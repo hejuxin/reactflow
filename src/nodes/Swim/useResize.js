@@ -46,7 +46,7 @@ export const useResize = (id, parentId) => {
       top: isTop,
       left: isLeft
     }
-    
+
 
 
 
@@ -76,7 +76,11 @@ export const useResize = (id, parentId) => {
     // }
   }
 
-
+  /**
+   * 用于计算当前node可移动的最大高度
+   * @param {*} e 
+   * @returns 
+   */
   const computeMaxHeight = (currentNode) => {
     const { top: isTop } = resizedirectionRef.current;
     // 第一个子节点向上缩放时，没有最大高度限制
@@ -120,11 +124,6 @@ export const useResize = (id, parentId) => {
     }
   }
 
-  /**
-   * 用于计算当前node可移动的最大高度
-   * @param {*} e 
-   * @returns 
-   */
   const handleResize = e => {
     const { top: isTop } = resizedirectionRef.current;
     // 第一个子节点向上缩放时，没有最大高度限制
@@ -221,7 +220,6 @@ export const useResize = (id, parentId) => {
               }
               node.position.x = titleWidth;
             }
-            return { ...node }
           })
         })
       } else {
@@ -233,7 +231,6 @@ export const useResize = (id, parentId) => {
             } else {
               node.width = width;
             }
-            return { ...node }
           })
         })
       }
@@ -250,14 +247,12 @@ export const useResize = (id, parentId) => {
 
           const y = node.position.y;
           node.position.y = y - diffH;
-          return { ...node }
         })
 
         laneNodes.forEach(laneNode => {
           reactflow.updateNode(laneNode.id, (node) => {
             const y = node.position.y;
             node.position.y = y + diffH;
-            return { ...node }
           })
         })
 
@@ -284,7 +279,6 @@ export const useResize = (id, parentId) => {
         reactflow.updateNode(parentId, (node) => {
           const height = getHeight(node);
           node.height = height + diffH;
-          return { ...node }
         })
 
         return;
@@ -316,21 +310,27 @@ export const useResize = (id, parentId) => {
             node.height = Math.min(newHeight, needChangeNodeMaxHeight)
           }
 
-          return { ...node }
         })
 
-        // 手动更改当前子泳道的y
-        // reactflow.updateNode(id, node => {
-        //   if (diffH > 0) {
-        //     node.position.y = Math.max(newHeight, laneMinHeight);
-        //   } else {
-        //     const needChangeNodeMaxHeight = (currentNodeHeight - laneMinHeight) + needChangeNodeHeight;
-        //     console.log(needChangeNodeMaxHeight, 'needChangeNodeMaxHeight')
-        //     node.position.y = Math.min(newHeight, needChangeNodeMaxHeight)
-        //   }
+        // 放大时限制最大高度
+        reactflow.updateNode(id, node => {
+          if (diffH > 0) {
+            const clientHeight = node.height;
 
-        //   return { ...node } 
-        // })
+            // 超出最大高度时的处理
+            if (clientHeight > maxHeightRef.current) {
+              // 将高度设为最大高度
+              node.height = maxHeightRef.current;
+
+              // 处理y
+              const diff = clientHeight - maxHeightRef.current;
+              const clientY = node.position.y;
+              node.position.y = clientY + diff;
+              
+            }
+          }
+        })
+
         return;
       }
       if (!isTop) {
@@ -349,7 +349,20 @@ export const useResize = (id, parentId) => {
             const diffY = diffH - (laneMinHeight - newHeight);
             node.position.y = y + diffY;
           }
-          return { ...node }
+        })
+
+
+        // 放大时限制最大高度
+        reactflow.updateNode(id, node => {
+          if (diffH > 0) {
+            const clientHeight = node.height;
+
+            // 超出最大高度时的处理
+            if (clientHeight > maxHeightRef.current) {
+              // 将高度设为最大高度
+              node.height = maxHeightRef.current;
+            }
+          }
         })
       }
     }
@@ -412,7 +425,7 @@ export const useResizeWrap = id => {
           reactflow.updateNode(node.id, (node) => {
             node.width = width - titleWidth;
             node.position.x = titleWidth;
-  
+
             return { ...node }
           })
         })
