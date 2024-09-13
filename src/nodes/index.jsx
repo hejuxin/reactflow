@@ -7,7 +7,7 @@ import Exclusive from "./GateWay/Exclusive";
 import Inclusive from "./GateWay/Inclusive";
 import Start from "./Events/StartEvent";
 import End from "./Events/EndEvent";
-import { laneType, wrapType } from "./Swim/utils";
+import { ParticipantLane, ParticipantHorizontal } from "./Swim/utils";
 
 const nodeTypesArr = [
   {
@@ -27,12 +27,12 @@ const nodeTypesArr = [
   },
   {
     name: '泳道',
-    type: wrapType,
+    type: ParticipantHorizontal,
     component: SwimWrapNode
   },
   {
     name: '子泳道',
-    type: laneType,
+    type: ParticipantLane,
     component: SwimLaneNode,
     show: false
   },
