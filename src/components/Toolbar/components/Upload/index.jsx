@@ -1,4 +1,4 @@
-import { getNodes } from '@/service';
+import { getElements } from '@/service';
 import convert from 'xml-js';
 
 const Upload = () => {
@@ -18,7 +18,7 @@ const Upload = () => {
       const content = convert.xml2json(xml, { compact: false, spaces: 4 });
       console.log(content, 'content')
 
-      const nodes = getNodes(content);
+      const { nodes, edges } = getElements(content);
       console.log(nodes, 'nodes');
     }
   }

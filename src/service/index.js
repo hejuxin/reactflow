@@ -1,9 +1,13 @@
-export const getNodes = (dataSource) => {
+import { Position } from "@xyflow/react";
+
+export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
   const definitions = data.elements;
   const elements = definitions[0].elements;
 
   let nodes = [];
+
+  let edges = [];
 
   const map = new Map();
 
@@ -16,7 +20,7 @@ export const getNodes = (dataSource) => {
         const props = element.attributes || {};
         const children = element.elements || [];
 
-        
+
         if (element.name === 'bpmndi:BPMNDiagram') {
           if (children.length) {
             formatToNode(children);
@@ -65,6 +69,96 @@ export const getNodes = (dataSource) => {
         // 文本暂不处理
         if (element.name === 'bpmndi:BPMNLabel') return;
 
+
+        if (element.name === 'incoming' || element.name === 'outgoing') {
+          // const id = element.elements[0].text;
+          // // let edge = edges.find(edge => edge.id === id);
+          // const index = edges.findIndex(edge => edge.id === id);
+          // let edge = {};
+          // if (index !== -1) {
+          //   edge = edges[index];
+          // } else {
+          //   edge = { id };
+          // }
+
+          // if (element.name === 'incoming') {
+          //   edge.target = parentId;
+          // } else {
+          //   edge.soruce = parentId;
+          // }
+
+          // if (index !== -1) {
+          //   edges.splice(index, 1, edge);
+          // } else {
+          //   edges.push(edge);
+          // }
+
+          return;
+        }
+
+        if (element.name === 'sequenceFlow') {
+          let edge = {
+            id: props.id,
+            source: props.sourceRef,
+            target: props.targetRef
+          }
+
+          edges.push(edge);
+
+          return;
+        }
+
+        if (element.name === 'bpmndi:BPMNEdge') {
+          const id = props.bpmnElement;
+          const start = children[0];
+          const end = children[children.length - 1];
+
+          const index = edges.findIndex(edge => edge.id === id);
+          const edge = edges[index];
+          const { source: sourceId, target: targetId } = edge;
+          const soruceNode = nodes.find(node => node.id === sourceId);
+          const targetNode = nodes.find(node => node.id === targetId);
+
+
+          const startX = Number(start.attributes.x);
+          const startY = Number(start.attributes.y);
+
+          const sourceMidX = Number(soruceNode.position.x) + (Number(soruceNode.style.width) / 2);
+          const sourceMidY = Number(soruceNode.position.y) + (Number(soruceNode.style.height) / 2);
+
+          const endX = Number(end.attributes.x);
+          const endY = Number(end.attributes.y);
+
+          const targetMidX = Number(targetNode.position.x) + (Number(targetNode.style.width) / 2);
+          const targetMidY = Number(targetNode.position.y) + (Number(targetNode.style.height) / 2);
+
+          if (startX === sourceMidX) {
+            if (startY < sourceMidY) {
+              edge.sourceHandle = `source-${Position.Top}`
+            } else {
+              edge.sourceHandle = `source-${Position.Bottom}`
+            }
+          } else if (startX < sourceMidX) {
+            edge.sourceHandle = `source-${Position.Left}`
+          } else {
+            edge.sourceHandle = `source-${Position.Right}`
+          }
+
+          if (endX === targetMidX) {
+            if (endY < targetMidY) {
+              edge.targetHandle = `target-${Position.Top}`
+            } else {
+              edge.targetHandle = `target-${Position.Bottom}`
+            }
+          } else if (endX < targetMidX) {
+            edge.targetHandle = `target-${Position.Left}`
+          } else {
+            edge.targetHandle = `target-${Position.Right}`
+          }
+          return;
+        }
+
+
         if (props.processRef) {
           const key = props.processRef;
           const value = props.id;
@@ -82,10 +176,11 @@ export const getNodes = (dataSource) => {
         }
 
         if (props.name) {
-          node.data = {
-            ...node.data,
-            label: props.name
-          }
+          // node.data = {
+          //   ...node.data,
+          //   label: props.name
+          // }
+          node.title = props.name;
         }
 
         if (parentId) {
@@ -95,22 +190,26 @@ export const getNodes = (dataSource) => {
         if (map.has(props.id)) {
           node.parentId = map.get(props.id);
         }
-  
+
         nodes.push(node);
 
         if (children.length) {
           formatToNode(children, props.id);
         }
       }
-      
+
     })
   }
 
   formatToNode(elements);
-  
+
 
   console.log(nodes, 'nodes');
-  return nodes;
+  console.log(edges, 'edges')
+  return {
+    nodes,
+    edges
+  };
 }
 
 
