@@ -131,6 +131,7 @@ function deleteLane ({ id, reactflow }) {
 
 export {
   createSwimLaneNode,
+  createWrap,
   createLane,
   laneMinWidth,
   laneMinHeight,

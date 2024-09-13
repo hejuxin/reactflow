@@ -102,19 +102,19 @@ export const getElements = (dataSource) => {
           const node = nodes[index];
 
           const style = {
-            width: props.width,
-            height: props.height
+            width: Number(props.width),
+            height: Number(props.height)
           }
 
           const position = {
-            x: props.x,
-            y: props.y
+            x: Number(props.x),
+            y: Number(props.y)
           }
 
           if (node.parentId) {
-            const parentNode = nodes.find(n => n.id === node.id);
-            position.x -= parentNode.position.x;
-            position.y -= parentNode.position.y;
+            const parentNode = nodes.find(n => n.id === node.parentId);
+            position.x = position.x - parentNode.position.x;
+            position.y = position.y - parentNode.position.y;
           }
 
           

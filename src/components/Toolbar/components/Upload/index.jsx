@@ -1,7 +1,9 @@
 import { getElements } from '@/service';
+import { useReactFlow } from '@xyflow/react';
 import convert from 'xml-js';
 
 const Upload = () => {
+  const reactflow = useReactFlow();
   const handleFileUpload = e => {
     console.log(e, 'e');
 
@@ -20,6 +22,9 @@ const Upload = () => {
 
       const { nodes, edges } = getElements(content);
       console.log(nodes, 'nodes');
+
+      reactflow.setNodes(nodes);
+      reactflow.setEdges(edges);
     }
   }
   return (
