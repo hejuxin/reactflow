@@ -1,4 +1,4 @@
-import Upload from "../Upload";
+import { Upload } from "./components";
 
 const Toolbar = () => {
   return (
