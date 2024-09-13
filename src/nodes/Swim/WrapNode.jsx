@@ -12,14 +12,27 @@ const WrapNode = (props) => {
   const nodes = useNodes();
 
   const { handleResizeStart, handleResizeEnd } = useResizeWrap(id);
-  
+
   const handleAdd = (pos) => {
     const laneNode = createLane({ parentId: id, parentWidth: props.width });
     const nodeIndex = nodes.findIndex(node => node.id === id);
+    const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
 
     if (pos === 'up') {
       const newNodes = [...nodes];
-      newNodes.splice(nodeIndex + 1, 0, laneNode);
+
+      if (laneNodes.length === 0) {
+        laneNode.style.height = props.height;
+        const laneNode1 = createLane({
+          parentId: id,
+          parentWidth: props.width,
+          positionY: props.height
+        });
+
+        newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
+      } else {
+        newNodes.splice(nodeIndex + 1, 0, laneNode);
+      }
 
       const needChangeNodes = nodes.filter(node => node.id.startsWith(id));
       needChangeNodes.forEach(node => {
@@ -33,10 +46,22 @@ const WrapNode = (props) => {
           return { ...node }
         });
       });
+
       reactflow.setNodes(newNodes);
     } else {
-      laneNode.position.y = props.height;
-      reactflow.addNodes(laneNode);
+      if (laneNodes.length === 0) {
+        laneNode.style.height = props.height;
+        const laneNode1 = createLane({
+          parentId: id,
+          parentWidth: props.width,
+          positionY: props.height
+        });
+
+        reactflow.addNodes([laneNode, laneNode1]);
+      } else {
+        laneNode.position.y = props.height;
+        reactflow.addNodes(laneNode);
+      }
     }
 
     reactflow.updateNode(id, (node) => {
@@ -72,7 +97,9 @@ const WrapNode = (props) => {
         <Button type='link' onClick={handleDel}>删除</Button>
       </NodeToolbar>
       <div className='swinWrap'>
-        <div className='title' style={{ width: titleWidth }}>title</div>
+        <div className='title' style={{ width: titleWidth }}>
+          <div>title</div>
+        </div>
       </div>
     </>
   )

@@ -26,7 +26,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
+import { createParticipant, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
 import { Slider, Toolbar } from "..";
 
 const Graph = () => {
@@ -141,10 +141,10 @@ const Graph = () => {
       });
 
       if (type === ParticipantHorizontal) {
-        const swimLaneNode = createSwimLaneNode({ position });
+        const swimLaneNode = createParticipant({ position });
 
         reactFlowInstance.addNodes(swimLaneNode)
-        newNodeRef.current = swimLaneNode[0];
+        newNodeRef.current = swimLaneNode;
       } else {
         const id = getHash()
         const newNode = {

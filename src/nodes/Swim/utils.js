@@ -73,7 +73,6 @@ function createParticipantHorizontal({
     type,
     position,
     style: {
-      border: `1px solid red`,
       width: wrapWidth,
       height: wrapHeight
     },
