@@ -26,7 +26,6 @@ import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
 import { createSwimLaneNode, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
-import { getData } from "@/service";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();

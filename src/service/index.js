@@ -210,26 +210,26 @@ export const getElements = (dataSource) => {
 
           if (startX === sourceMidX) {
             if (startY < sourceMidY) {
-              edge.sourceHandle = `source-${Position.Top}`
+              edge.sourceHandle = `${sourceId}-source-${Position.Top}`
             } else {
-              edge.sourceHandle = `source-${Position.Bottom}`
+              edge.sourceHandle = `${sourceId}-source-${Position.Bottom}`
             }
           } else if (startX < sourceMidX) {
-            edge.sourceHandle = `source-${Position.Left}`
+            edge.sourceHandle = `${sourceId}-source-${Position.Left}`
           } else {
-            edge.sourceHandle = `source-${Position.Right}`
+            edge.sourceHandle = `${sourceId}-source-${Position.Right}`
           }
 
           if (endX === targetMidX) {
             if (endY < targetMidY) {
-              edge.targetHandle = `target-${Position.Top}`
+              edge.targetHandle = `${targetId}-target-${Position.Top}`
             } else {
-              edge.targetHandle = `target-${Position.Bottom}`
+              edge.targetHandle = `${targetId}-target-${Position.Bottom}`
             }
           } else if (endX < targetMidX) {
-            edge.targetHandle = `target-${Position.Left}`
+            edge.targetHandle = `${targetId}-target-${Position.Left}`
           } else {
-            edge.targetHandle = `target-${Position.Right}`
+            edge.targetHandle = `${targetId}-target-${Position.Right}`
           }
           return;
         }
