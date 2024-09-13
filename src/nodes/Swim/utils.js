@@ -167,8 +167,174 @@ function deleteLane({ id, reactflow }) {
 }
 
 
-function getLaneNodes ({ nodes, parentId }) {
+function getLaneNodes({ nodes, parentId }) {
   return nodes.filter(n => n.parentId === parentId && n.type === ParticipantLane);
+}
+
+function handleAddLane(params) {
+  if (params.isLane ?? true) {
+    handleAddLaneOnLaneNode(params);
+  } else {
+    handleAddLaneOnWrapNode(params);
+  }
+}
+
+function handleAddLaneOnLaneNode({ direction, reactflow, id, parentId }) {
+  const nodes = reactflow.getNodes();
+  const laneNodes = getLaneNodes({ nodes, parentId });
+  const parentNode = reactflow.getNode(parentId);
+  const currentNode = reactflow.getNode(id);
+  const positionY = currentNode.position.y;
+
+  const currentNodeIndex = nodes.findIndex(node => node.id === id);
+
+  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+
+  const newNodes = [...nodes];
+  if (direction === 'up') {
+    const laneNode = createLane({
+      parentId: parentId,
+      parentWidth: parentNode.width ?? parentNode.measured.width,
+      positionY
+    });
+
+    newNodes.splice(currentNodeIndex, 0, laneNode);
+    reactflow.setNodes(newNodes);
+    // reactflow.addNodes(laneNode);
+
+    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
+
+    needChangeNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const y = node.position.y;
+        node.position.y = y + laneDefalutHeight;
+        return { ...node }
+      });
+    });
+
+
+
+    reactflow.updateNode(parentId, (node) => {
+      node.width = node.width ?? node.measured.width;
+      node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
+      const y = node.position.y;
+      node.position.y = y - laneDefalutHeight;
+    })
+
+    // onWrapPositionYChangeEffect({ reactflow, parentId })
+
+
+  } else {
+    const laneNode = createLane({
+      parentId: parentId,
+      parentWidth: parentNode.width ?? parentNode.measured.width,
+      positionY: positionY + (currentNode.height ?? currentNode.measured.height)
+    });
+
+    newNodes.splice(currentNodeIndex + 1, 0, laneNode);
+    reactflow.setNodes(newNodes);
+    // reactflow.addNodes(laneNode);
+
+    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes + 1);
+
+    needChangeNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const y = node.position.y;
+        node.position.y = y + laneDefalutHeight;
+        return { ...node }
+      });
+    });
+
+    reactflow.updateNode(parentId, (node) => {
+      node.width = node.width ?? node.measured.width;
+      node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
+      return { ...node }
+    }, { replace: true })
+  }
+}
+
+function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
+  const nodes = reactflow.getNodes();
+  const parentNode = reactflow.getNode(id);
+  const parentWidth = parentNode.width ?? parentNode.measured.width;
+  const parentHeight = parentNode.height ?? parentNode.measured.height;
+  const nodeIndex = nodes.findIndex(node => node.id === id);
+  const laneNodes = getLaneNodes({ nodes, parentId: id });
+
+  const laneNode = createLane({ parentId: id, parentWidth });
+
+  if (direction === 'up') {
+    const newNodes = [...nodes];
+
+    if (laneNodes.length === 0) {
+      laneNode.style.height = parentHeight;
+      const laneNode1 = createLane({
+        parentId: id,
+        parentWidth,
+        positionY: parentHeight
+      });
+
+      newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
+    } else {
+      newNodes.splice(nodeIndex + 1, 0, laneNode);
+    }
+
+    reactflow.updateNode(id, node => {
+      const y = node.position.y;
+      node.position.y = y - laneDefalutHeight;
+    })
+
+    laneNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const y = node.position.y;
+        if (node.type === ParticipantLane) {
+          node.position.y = y + laneDefalutHeight;
+        } else {
+          node.position.y = y - laneDefalutHeight;
+        }
+        return { ...node }
+      });
+    });
+
+    reactflow.setNodes(newNodes);
+  } else {
+    if (laneNodes.length === 0) {
+      laneNode.style.height = parentHeight;
+      const laneNode1 = createLane({
+        parentId: id,
+        parentWidth: parentWidth,
+        positionY: parentHeight
+      });
+
+      reactflow.addNodes([laneNode, laneNode1]);
+    } else {
+      laneNode.position.y = parentHeight;
+      reactflow.addNodes(laneNode);
+    }
+  }
+
+  reactflow.updateNode(id, (node) => {
+    node.width = parentWidth;
+    node.height = parentHeight + laneDefalutHeight
+    return { ...node }
+  }, { replace: true })
+}
+
+// todo
+let preNodeEndY = 0;
+function onWrapPositionYChangeEffect({ reactflow, parentId }) {
+  const nodes = reactflow.getNodes();
+  const laneNodes = getLaneNodes({ nodes, parentId });
+
+  console.log(laneNodes, 'onWrapPositionYChangeEffect')
+
+  laneNodes.forEach(node => {
+    reactflow.updateNode(node.id, node => {
+      // const y = node.position.y;
+      node.position.y = preNodeEndY;
+      preNodeEndY = preNodeEndY + (node.height ?? node.measured.height);
+    });
+  });
 }
 
 export {
@@ -180,5 +346,6 @@ export {
   laneDefalutHeight,
   titleWidth,
   deleteLane,
-  getLaneNodes
+  getLaneNodes,
+  handleAddLane
 }

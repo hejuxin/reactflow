@@ -1,7 +1,7 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
-import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth, deleteLane, getLaneNodes } from './utils';
+import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth, deleteLane, getLaneNodes, handleAddLane } from './utils';
 import { useResize } from './useResize'
 import './index.less';
 import { Button } from 'antd';
@@ -41,70 +41,7 @@ const LaneNode = (props) => {
 
   }, [maxHeight]);
 
-
-  const handleAdd = (pos) => {
-    const parentNode = reactflow.getNode(parentId);
-    const positionY = currentNode.position.y;
-
-    const currentNodeIndex = nodes.findIndex(node => node.id === id);
-
-    const newNodes = [...nodes];
-    if (pos === 'up') {
-      const laneNode = createLane({
-        parentId: parentId,
-        parentWidth: parentNode.width ?? parentNode.measured.width,
-        positionY
-      });
-
-      newNodes.splice(currentNodeIndex, 0, laneNode);
-      const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
-
-      needChangeNodes.forEach(node => {
-        reactflow.updateNode(node.id, node => {
-          const y = node.position.y;
-          node.position.y = y + laneDefalutHeight;
-          return { ...node }
-        });
-      });
-
-      reactflow.setNodes(newNodes);
-
-      reactflow.updateNode(parentId, (node) => {
-        node.width = node.width ?? node.measured.width;
-        node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
-        const y = node.position.y;
-        node.position.y = y - laneDefalutHeight;
-        return { ...node }
-      }, { replace: true })
-
-    } else {
-      const laneNode = createLane({
-        parentId: parentId,
-        parentWidth: parentNode.width ?? parentNode.measured.width,
-        positionY: positionY + (currentNode.height ?? currentNode.measured.height)
-      });
-
-      newNodes.splice(currentNodeIndex + 1, 0, laneNode);
-      const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes + 1);
-
-      needChangeNodes.forEach(node => {
-        reactflow.updateNode(node.id, node => {
-          const y = node.position.y;
-          node.position.y = y + laneDefalutHeight;
-          return { ...node }
-        });
-      });
-
-      reactflow.setNodes(newNodes);
-
-      reactflow.updateNode(parentId, (node) => {
-        node.width = node.width ?? node.measured.width;
-        node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
-        return { ...node }
-      }, { replace: true })
-    }
-
-  }
+  const handleAdd = (direction) => handleAddLane({ direction, reactflow, id, parentId });
 
 
   const handleDel = () => {
