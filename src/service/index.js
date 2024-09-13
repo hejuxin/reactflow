@@ -1,4 +1,5 @@
 import { Position } from "@xyflow/react";
+import { createSwimLaneNode, ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane } from "@/nodes/Swim/utils";
 
 export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
@@ -20,6 +21,44 @@ export const getElements = (dataSource) => {
         const props = element.attributes || {};
         const children = element.elements || [];
 
+        if (props.processRef) {
+          const key = props.processRef;
+          const value = props.id;
+          map.set(key, value);
+        }
+
+        if (element.name === 'collaboration') {
+          formatToNode(children, props.id);
+          return;
+        }
+
+        if (element.name === 'participant') {
+          const participantnodes = createSwimLaneNode({ id: props.id, position: {x: 0, y: 0} });
+
+          participantnodes[0].title = props.name;
+          nodes.push(...participantnodes);
+
+          return;
+        }
+
+        if (element.name === 'process') {
+          const nodeId = map.get(props.id);
+          formatToNode(children, nodeId);
+          return;
+          
+        }
+
+        if (element.name === 'laneSet') {
+          formatToNode(children, parentId);
+          return;
+        }
+
+        if (element.name === 'lane') {
+          const node = createLane({ id: props.id, parentId, parentWidth: 0 });
+          nodes.push(node);
+          return;
+        }
+
 
         if (element.name === 'bpmndi:BPMNDiagram') {
           if (children.length) {
@@ -38,6 +77,16 @@ export const getElements = (dataSource) => {
         if (element.name === 'bpmndi:BPMNShape') {
           const nodeId = props.bpmnElement;
 
+          if (props.hasOwnProperty('isHorizontal')) {
+            const index = nodes.findIndex(node => node.id === nodeId);
+            const node = nodes[index];
+            // 如果是子泳道直接返回
+            if (node.type === ParticipantLane) return;
+            node.type = props.isHorizontal ? ParticipantHorizontal : ParticipantVertical;
+
+            nodes[index] = node;
+          }
+          // const index = nodes.findIndex(node => node.id === nodeId);
 
           if (children.length) {
             formatToNode(children, nodeId);
@@ -48,6 +97,8 @@ export const getElements = (dataSource) => {
 
         if (element.name === 'omgdc:Bounds') {
           const index = nodes.findIndex(node => node.id === parentId);
+          const node = nodes[index];
+
           const style = {
             width: props.width,
             height: props.height
@@ -58,10 +109,33 @@ export const getElements = (dataSource) => {
             y: props.y
           }
 
-          const node = nodes[index];
-          node.style = style;
-          node.position = position;
-          nodes.splice(index, 1, node);
+          if (node.parentId) {
+            const parentNode = nodes.find(n => n.id === node.id);
+            position.x -= parentNode.position.x;
+            position.y -= parentNode.position.y;
+          }
+
+          
+          node.style = {
+            ...node.style,
+            ...style
+          };
+          node.position = {
+            ...node.position,
+            ...position
+          };
+
+          nodes[index] = node;
+
+          const laneNode = nodes.filter(node => node.id.startsWith(parentId) && node.type === ParticipantLane);
+
+          laneNode.forEach(lane => {
+            if (node.type === ParticipantHorizontal) {
+              lane.style.width = node.style.width - titleWidth;
+            } else {
+              lane.style.height = node.style.height - titleWidth;
+            }
+          })
 
           return;
         }
@@ -156,13 +230,6 @@ export const getElements = (dataSource) => {
             edge.targetHandle = `target-${Position.Right}`
           }
           return;
-        }
-
-
-        if (props.processRef) {
-          const key = props.processRef;
-          const value = props.id;
-          map.set(key, value);
         }
 
         const node = {

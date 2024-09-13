@@ -25,7 +25,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode, deleteLane, laneType, wrapType } from "@/nodes/Swim/utils";
+import { createSwimLaneNode, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
 import { getData } from "@/service";
 
 const Graph = () => {
@@ -89,7 +89,7 @@ const Graph = () => {
       );
 
 
-      if (deleted.length === 1 && deleted[0].type === laneType) {
+      if (deleted.length === 1 && deleted[0].type === ParticipantLane) {
         deleteLane({
           id: deleted[0].id,
           reactflow: reactFlowInstance
@@ -139,7 +139,7 @@ const Graph = () => {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      if (type === wrapType) {
+      if (type === ParticipantHorizontal) {
         const swimLaneNode = createSwimLaneNode({ position });
 
         reactFlowInstance.addNodes(swimLaneNode)

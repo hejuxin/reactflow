@@ -2,7 +2,7 @@ import React, { memo, useRef } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { createLane, titleWidth, laneMinWidth, laneDefalutHeight, laneType } from './utils';
+import { createLane, titleWidth, laneMinWidth, laneDefalutHeight, ParticipantLane } from './utils';
 import './index.less';
 import { useResizeWrap } from './useResize';
 
@@ -25,7 +25,7 @@ const WrapNode = (props) => {
       needChangeNodes.forEach(node => {
         reactflow.updateNode(node.id, node => {
           const y = node.position.y;
-          if (node.type === laneType) {
+          if (node.type === ParticipantLane) {
             node.position.y = y + laneDefalutHeight;
           } else {
             node.position.y = y - laneDefalutHeight;
