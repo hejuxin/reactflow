@@ -288,8 +288,7 @@ const Graph = () => {
       </Drawer>
       <Button
         onClick={() => {
-          // console.log(reactFlowInstance.toObject());
-          getData()
+          console.log(reactFlowInstance.toObject());
         }}
       >
         output
