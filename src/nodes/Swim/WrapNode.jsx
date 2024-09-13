@@ -2,7 +2,7 @@ import React, { memo, useRef } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { createLane, titleWidth, laneMinWidth, laneDefalutHeight, ParticipantLane } from './utils';
+import { createLane, titleWidth, laneMinWidth, laneDefalutHeight, ParticipantLane, getLaneNodes } from './utils';
 import './index.less';
 import { useResizeWrap } from './useResize';
 
@@ -16,7 +16,7 @@ const WrapNode = (props) => {
   const handleAdd = (pos) => {
     const laneNode = createLane({ parentId: id, parentWidth: props.width });
     const nodeIndex = nodes.findIndex(node => node.id === id);
-    const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
+    const laneNodes = getLaneNodes({ nodes, parentId: id });
 
     if (pos === 'up') {
       const newNodes = [...nodes];

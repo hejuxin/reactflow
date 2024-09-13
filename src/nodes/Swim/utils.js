@@ -123,7 +123,7 @@ function deleteLane({ id, reactflow }) {
   const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
 
   const nodes = reactflow.getNodes();
-  const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+  const laneNodes = getLaneNodes({ nodes, parentId });
   const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
   const isFirstNode = id === laneNodes[0].id;
   if (isFirstNode) {
@@ -166,6 +166,11 @@ function deleteLane({ id, reactflow }) {
 
 }
 
+
+function getLaneNodes ({ nodes, parentId }) {
+  return nodes.filter(n => n.parentId === parentId && n.type === ParticipantLane);
+}
+
 export {
   createSwimLaneNode,
   createParticipant,
@@ -174,5 +179,6 @@ export {
   laneMinHeight,
   laneDefalutHeight,
   titleWidth,
-  deleteLane
+  deleteLane,
+  getLaneNodes
 }

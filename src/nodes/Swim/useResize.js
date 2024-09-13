@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { titleWidth, laneMinHeight, laneMinWidth, ParticipantLane, ParticipantHorizontal } from "./utils";
+import { titleWidth, laneMinHeight, laneMinWidth, ParticipantLane, ParticipantHorizontal, getLaneNodes } from "./utils";
 
 const getHeight = node => {
   return node.measured.height;
@@ -47,7 +47,7 @@ export const useResize = (id, parentId) => {
 
   const intersectingNodesRef = useRef([]);
 
-  const laneNodes = nodes.filter(node => node.id.startsWith(parentId) && node.id !== parentId);
+  const laneNodes = getLaneNodes({ nodes, parentId });
   const isFirstNode = id === laneNodes[0].id;
   const isLastNode = id === laneNodes[laneNodes.length - 1].id;
 
@@ -574,7 +574,7 @@ export const useResizeWrap = id => {
   const resizedirectionRef = useRef(initiationDirection);
   const startSizeRef = useRef();
   const intersectingNodesRef = useRef();
-  const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
+  const laneNodes = getLaneNodes({ nodes, parentId: id });
 
   const currentNode = reactflow.getNode(id);
 
