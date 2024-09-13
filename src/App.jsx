@@ -5,8 +5,8 @@ import './App.css';
 export default function App() {
   return (
     <div className='container'>
-      <Toolbar />
-      <Slider />
+      {/* <Toolbar />
+      <Slider /> */}
       <Graph />
     </div>
   );

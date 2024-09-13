@@ -17,6 +17,7 @@ import {
   Controls,
   ReactFlow,
   ReactFlowProvider,
+  Panel
 } from "@xyflow/react";
 import { nodes as initialNodes, edges as initialEdges } from "@/mock";
 import "@xyflow/react/dist/style.css";
@@ -26,6 +27,7 @@ import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
 import { createSwimLaneNode, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
+import { Slider, Toolbar } from "..";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -265,12 +267,13 @@ const Graph = () => {
             minZoom={0.1}
             maxZoom={1}
           >
-            <Controls position="top-right" orientation="horizontal">
-              {/* <ControlButton
-                onClick={() => alert("Something magical just happened. ✨")}
-              ></ControlButton> */}
-            </Controls>
-            <MiniMap />
+            {/* <Controls position="top-right" orientation="horizontal"></Controls>
+            <MiniMap /> */}
+
+            <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
+              <Toolbar />
+              <Slider />
+            </Panel>
             <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
           </ReactFlow>
         </ReactFlowProvider>
