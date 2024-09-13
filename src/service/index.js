@@ -1,5 +1,5 @@
 import { Position } from "@xyflow/react";
-import { createSwimLaneNode, ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane } from "@/nodes/Swim/utils";
+import { createSwimLaneNode, ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane, createWrap } from "@/nodes/Swim/utils";
 
 export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
@@ -33,10 +33,10 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'participant') {
-          const participantnodes = createSwimLaneNode({ id: props.id, position: {x: 0, y: 0} });
+          const participantnode = createWrap({ id: props.id, position: {x: 0, y: 0} });
 
-          participantnodes[0].title = props.name;
-          nodes.push(...participantnodes);
+          participantnode.title = props.name;
+          nodes.push(participantnode);
 
           return;
         }
@@ -54,7 +54,8 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'lane') {
-          const node = createLane({ id: props.id, parentId, parentWidth: 0 });
+          const node = createLane({ parentId, parentWidth: 0 });
+          node._id = props.id;
           nodes.push(node);
           return;
         }
@@ -78,13 +79,14 @@ export const getElements = (dataSource) => {
           const nodeId = props.bpmnElement;
 
           if (props.hasOwnProperty('isHorizontal')) {
-            const index = nodes.findIndex(node => node.id === nodeId);
+            const index = nodes.findIndex(node => node.id === nodeId || node._id === nodeId);
             const node = nodes[index];
             // 如果是子泳道直接返回
-            if (node.type === ParticipantLane) return;
-            node.type = props.isHorizontal ? ParticipantHorizontal : ParticipantVertical;
+            if (node.type !== ParticipantLane) {
+              node.type = props.isHorizontal ? ParticipantHorizontal : ParticipantVertical;
 
-            nodes[index] = node;
+              nodes[index] = node;
+            }
           }
           // const index = nodes.findIndex(node => node.id === nodeId);
 
@@ -96,7 +98,7 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'omgdc:Bounds') {
-          const index = nodes.findIndex(node => node.id === parentId);
+          const index = nodes.findIndex(node => node.id === parentId || node._id === parentId);
           const node = nodes[index];
 
           const style = {
