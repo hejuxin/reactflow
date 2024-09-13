@@ -1,14 +1,9 @@
 import { useState, useRef } from "react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { titleWidth, laneMinHeight, laneMinWidth, laneType, wrapType } from "./utils";
+import { titleWidth, laneMinHeight, laneMinWidth, ParticipantLane, ParticipantHorizontal } from "./utils";
 
 const getHeight = node => {
   return node.measured.height;
-}
-
-const initResizedirection = {
-  top: false,
-  left: false
 }
 
 const initiationDirection = {
@@ -31,7 +26,6 @@ function getControlDirection(controlPosition) {
     affectsTop,
   };
 }
-// export const useResize = (reactflow) => {
 export const useResize = (id, parentId) => {
   const reactflow = useReactFlow();
 
@@ -79,37 +73,14 @@ export const useResize = (id, parentId) => {
     if (direction.isHorizontal) {
       // 若横向有变化，记录的是容器的交叉node
       const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== laneType);
+      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== ParticipantLane);
     } else {
       // 记录当前子泳道的交叉node
       const intersectingNodes = reactflow.getIntersectingNodes({ id }, true);
-      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== wrapType);
+      intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== ParticipantHorizontal);
     }
 
-    // if (isTop) {
-    //   if (isFirstNode) return;
-    //   const needChangeNode = nodes[index - 1];
-    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
-    //   const currentNodeMaxHeight = getHeight(node) + diffH;
-    //   setMaxHeight(() => currentNodeMaxHeight)
-    // } else {
-    //   if (isLastNode) return;
-    //   const needChangeNode = nodes[index + 1];
-    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
-    //   const currentNodeMaxHeight = getHeight(node) + diffH;
-    //   setMaxHeight(() => currentNodeMaxHeight)
-    // }
-
     computeMaxHeight(currentNode);
-    // console.log(currentNode.position.y, 0, currentNode);
-
-    // const maxHeight = boundariesRef.current.maxHeight;
-    // if (maxHeight) {
-    //   reactflow.updateNode(id, (node) => {
-    //     node.maxHeight = maxHeight;
-    //     return { ...node }
-    //   })
-    // }
   }
 
   /**
@@ -130,12 +101,6 @@ export const useResize = (id, parentId) => {
     if (isLastNode && isBottomDirection) return;
 
     const index = laneNodes.findIndex(node => node.id === id);
-
-    // reactflow.updateNode(id, (node) => {
-    //   const _node = { ...node };
-    //   _node.extent = 'parent';
-    //   return _node
-    // }, { replace: true })
 
     // 向上缩放时，需获取上一个子泳道的高度
     if (isTopDirection && !isFirstNode) {
@@ -177,61 +142,6 @@ export const useResize = (id, parentId) => {
     if (isFirstNode && isVertical && affectsTop) return;
     // 最后一个子节点向下缩放时，没有最大高度限制
     if (isLastNode && isVertical && !affectsTop) return;
-
-
-    // const { width: startWidth, height: startHeight } = startSizeRef.current;
-    // const index = nodes.findIndex(node => node.id === id);
-
-    // if (isTop && !isFirstNode) {
-    //   const currentNode = reactflow.getNode(id);
-    //   console.log(currentNode.position.y, 1, currentNode)
-    //   if (currentNode.measured.height > maxHeight) {
-    //     // reactflow.updateNode(id, (node) => {
-    //     //   node.maxHeight = maxHeight;
-    //     //   return { ...node }
-    //     // }, { replace: true })
-    //     // console.log(currentNode.position.y, 2, currentNode)
-
-    //     // return false
-
-
-    //     // reactflow.updateNode(id, (node) => {
-    //     //     node.height = maxHeight;
-    //     //     return { ...node }
-    //     //   }, { replace: true })
-
-    //   }
-
-    //   return;
-    // }
-
-    // if (!isTop && !isLastNode) {
-    //   const needChangeNode = nodes[index + 1];
-    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
-    //   const currentNodeMaxHeight = (node.height ?? startHeight) + diffH;
-    //   if (node.measured.height > currentNodeMaxHeight && !node.maxHeight) {
-    //     reactflow.updateNode(id, (node) => {
-    //       node.maxHeight = currentNodeMaxHeight;
-    //       return { ...node }
-    //     })
-
-    //     setBoundaries('maxHeight', currentNodeMaxHeight);
-    //     return false;
-    //   }
-
-    //   return;
-    // }
-
-
-
-    // ----------------
-    // {
-    //   if (isLastNode) return;
-    //   const needChangeNode = nodes[index + 1];
-    //   const diffH = getHeight(needChangeNode) - laneMinHeight;
-    //   const currentNodeMaxHeight = getHeight(node) + diffH;
-    //   setMaxHeight(() => currentNodeMaxHeight)
-    // }
   }
 
   const onWidthChange = () => {
@@ -383,7 +293,7 @@ export const useResize = (id, parentId) => {
 
         // 更新所有除子泳道的node的位置
         const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-        const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+        const normalNodes = intersectingNodes.filter(node => node.type !== ParticipantLane);
 
         normalNodes.forEach(intersectingNode => {
           reactflow.updateNode(intersectingNode.id, (node) => {
@@ -427,7 +337,7 @@ export const useResize = (id, parentId) => {
 
           // 更新所有除子泳道的node的位置
           const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-          const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+          const normalNodes = intersectingNodes.filter(node => node.type !== ParticipantLane);
 
           normalNodes.forEach(intersectingNode => {
             reactflow.updateNode(intersectingNode.id, (node) => {
@@ -456,7 +366,7 @@ export const useResize = (id, parentId) => {
 
           // 更新所有除子泳道的node的位置
           const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true);
-          const normalNodes = intersectingNodes.filter(node => node.type !== laneType);
+          const normalNodes = intersectingNodes.filter(node => node.type !== ParticipantLane);
 
           normalNodes.forEach(intersectingNode => {
             reactflow.updateNode(intersectingNode.id, (node) => {
@@ -629,7 +539,7 @@ export const useResize = (id, parentId) => {
 
     if (isPositionChange) {
       // 更新所有除子泳道的node的位置
-      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true).filter(node => node.type !== laneType && node.parentId === parentId);
+      const intersectingNodes = reactflow.getIntersectingNodes({ id: parentId }, true).filter(node => node.type !== ParticipantLane && node.parentId === parentId);
 
       intersectingNodes.forEach(intersectingNode => {
         reactflow.updateNode(intersectingNode.id, (node) => {
@@ -679,7 +589,7 @@ export const useResizeWrap = id => {
 
     // 记录当前子泳道的交叉node
     const intersectingNodes = reactflow.getIntersectingNodes({ id }, true);
-    intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== wrapType);
+    intersectingNodesRef.current = intersectingNodes.filter(node => node.type !== ParticipantHorizontal);
   }
 
   const handleResizeEnd = e => {
@@ -752,7 +662,7 @@ export const useResizeWrap = id => {
 
     if (isPositionChange) {
       // 更新所有除子泳道的node的位置
-      const intersectingNodes = reactflow.getIntersectingNodes({ id }, true).filter(node => node.type !== laneType && node.parentId === id);
+      const intersectingNodes = reactflow.getIntersectingNodes({ id }, true).filter(node => node.type !== ParticipantLane && node.parentId === id);
 
       intersectingNodes.forEach(intersectingNode => {
         reactflow.updateNode(intersectingNode.id, (node) => {
