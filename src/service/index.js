@@ -1,5 +1,5 @@
 import { Position } from "@xyflow/react";
-import { createSwimLaneNode, ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane, createWrap } from "@/nodes/Swim/utils";
+import { ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane, createParticipant } from "@/nodes/Swim/utils";
 
 export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
@@ -33,7 +33,7 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'participant') {
-          const participantnode = createWrap({ id: props.id, position: {x: 0, y: 0} });
+          const participantnode = createParticipant({ id: props.id, position: {x: 0, y: 0} });
 
           participantnode.title = props.name;
           nodes.push(participantnode);

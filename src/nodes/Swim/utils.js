@@ -17,7 +17,7 @@ function laneCountIncrease() {
   laneCount++
 }
 
-function createLane ({
+function createLane({
   parentId,
   parentWidth,
   height,
@@ -47,13 +47,28 @@ function createLane ({
   return laneNode;
 }
 
-function createWrap ({
+function createParticipant({
+  position,
+  id,
+  isHorizontal = true
+}) {
+  let node = {};
+  if (isHorizontal) {
+    node = createParticipantHorizontal({ position, id });
+  } else {
+    node = createParticipantVertical({ position, id });
+  }
+
+  return node;
+}
+
+function createParticipantHorizontal({
   position,
   id
 }) {
   const nodeId = id ?? getHash();
   const type = ParticipantHorizontal;
-  const wrapNode = {
+  const node = {
     id: nodeId,
     type,
     position,
@@ -67,20 +82,43 @@ function createWrap ({
     zIndex: 5
   };
 
-  return wrapNode;
+  return node;
+}
+
+function createParticipantVertical({
+  position,
+  id
+}) {
+  const nodeId = id ?? getHash();
+  const type = ParticipantVertical;
+  const node = {
+    id: nodeId,
+    type,
+    position,
+    style: {
+      border: `1px solid red`,
+      width: wrapWidth,
+      height: wrapHeight
+    },
+    // 传入节点 data
+    data: { label: `${type} node` },
+    zIndex: 5
+  };
+
+  return node;
 }
 
 function createSwimLaneNode({
   position,
   id = getHash()
 }) {
-  const wrapNode = createWrap({ id, position });
+  const wrapNode = createParticipant({ id, position });
   const laneNode = createLane({ parentId: id, parentWidth: wrapWidth, height: wrapHeight });
 
   return [wrapNode, laneNode];
 }
 
-function deleteLane ({ id, reactflow }) {
+function deleteLane({ id, reactflow }) {
   const currentNode = reactflow.getNode(id);
   const parentId = currentNode.parentId;
   const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
@@ -131,7 +169,7 @@ function deleteLane ({ id, reactflow }) {
 
 export {
   createSwimLaneNode,
-  createWrap,
+  createParticipant,
   createLane,
   laneMinWidth,
   laneMinHeight,
