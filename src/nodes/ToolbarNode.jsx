@@ -6,6 +6,7 @@ import {
 import { Button, Input } from 'antd';
 import { FlowContext } from '../context';
 import './index.less';
+import Handles from '@/components/Handles';
 
 function ToolbarNode(props) {
   const [isEdit, setIsEdit] = useState(false);
@@ -49,15 +50,8 @@ function ToolbarNode(props) {
               <div style={{ padding: '10px 20px' }}>
                 <div>🚀</div>
               </div>
-              <Handle type="source" id="source-1" position={Position.Top} />
-              <Handle type="source" id="source-2" position={Position.Left} />
-              <Handle type="source" id="source-3" position={Position.Right} />
-              <Handle type="source" id="source-4" position={Position.Bottom} />
 
-              <Handle type="target" id="target-1" position={Position.Top} />
-              <Handle type="target" id="target-2" position={Position.Left} />
-              <Handle type="target" id="target-3" position={Position.Right} />
-              <Handle type="target" id="target-4" position={Position.Bottom} />
+              <Handles id={id} />
               <div
                 style={{
                   //   position: 'absolute',

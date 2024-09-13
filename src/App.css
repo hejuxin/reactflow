@@ -48,10 +48,14 @@
   box-sizing: border-box;
 }
 
+.toolWrap {
+  width: 100px;
+}
+
 .sliderWrap {
   width: 300px;
   background-color: #fff;
-  position: absolute;
+  /* position: absolute; */
   z-index: 99;
 }
 
