@@ -1,0 +1,52 @@
+.resizewrap {
+  --padding: 5px;
+  border: 1px solid #0095ff;
+  position: absolute;
+  top: calc(-1 * var(--padding));
+  left: calc(-1 * var(--padding));
+  width: calc(100% + 2 * var(--padding));
+  height: calc(100% + 2 * var(--padding));
+
+  .react-flow__resize-control {
+
+    &.handle {
+      width: 6px;
+      height: 6px;
+    }
+    // &.line {
+    //   &.left {
+    //     transform: translate(-200%, 0) !important;
+    //   }
+  
+    //   &.right {
+    //     transform: translate(100%, 0) !important;
+    //   }
+  
+    //   &.top {
+    //     transform: translate(0, -200%) !important;
+    //   }
+  
+    //   &.bottom {
+    //     transform: translate(0, 100%) !important;
+    //   }
+    // }
+  
+    // &.handle {
+    //   &.top.left {
+    //     transform: translate(-100%, -100%) !important;
+    //   }
+  
+    //   &.top.right {
+    //     transform: translate(0, -100%) !important;
+    //   }
+  
+    //   &.bottom.left {
+    //     transform: translate(-100%, 0) !important;
+    //   }
+  
+    //   &.bottom.right {
+    //     transform: none;
+    //   }
+    // }
+  }
+}

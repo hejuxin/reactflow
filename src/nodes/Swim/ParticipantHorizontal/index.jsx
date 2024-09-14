@@ -5,25 +5,16 @@ import { Button } from 'antd';
 import { createLane, titleWidth, handleAddLaneHorizontal, ParticipantHorizontalLaneSize } from '../utils';
 import { useResizeWrap } from '../useResize';
 import '../index.less';
-import Toolbar from '../components/Toolbar';
+import { Toolbar, Resizer } from '../components';
 
 const ParticipantHorizontal = (props) => {
   const { selected = false, data, id } = props;
-  const reactflow = useReactFlow();
 
   const { handleResizeStart, handleResizeEnd } = useResizeWrap(id);
 
-  const handleAdd = (direction) => handleAddLaneHorizontal({ direction, reactflow, id, isLane: false });
-
-  const handleDel = () => {
-    reactflow.deleteElements({
-      nodes: [{ id }]
-    })
-  }
-
   return (
     <>
-      <NodeResizer
+      <Resizer
         color="#0095ff"
         isVisible={selected}
         minWidth={ParticipantHorizontalLaneSize.minWidth + titleWidth}

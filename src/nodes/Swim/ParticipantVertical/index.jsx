@@ -3,7 +3,7 @@ import { NodeResizer, useReactFlow } from '@xyflow/react';
 import { titleWidth, ParticipantVerticalLaneSize } from '../utils';
 import { useResizeWrap } from '../useResize';
 import '../index.less';
-import Toolbar from '../components/Toolbar';
+import { Toolbar, Resizer } from '../components';
 
 const ParticipantVertical = (props) => {
   const { selected = false, data, id } = props;
@@ -12,7 +12,7 @@ const ParticipantVertical = (props) => {
 
   return (
     <>
-      <NodeResizer
+      <Resizer
         color="#0095ff"
         isVisible={selected}
         minWidth={ParticipantVerticalLaneSize.minWidth}

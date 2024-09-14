@@ -1,9 +1,8 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
-import cn from 'classnames';
-import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidthHorizontal,  ParticipantHorizontalLaneSize, ParticipantVerticalLaneSize, laneMinWidthVertical, getIsHorizontal } from './utils';
+import { ParticipantHorizontalLaneSize, ParticipantVerticalLaneSize, laneMinWidthVertical, getIsHorizontal } from './utils';
 import { useResize } from './useResize'
-import Toolbar from './components/Toolbar';
+import { Toolbar, Resizer } from './components';
 import './index.less';
 
 const LaneNode = (props) => {
@@ -31,7 +30,7 @@ const LaneNode = (props) => {
 
   return (
     <div className='laneWrap'>
-      <NodeResizer
+      <Resizer
         color="#0095ff"
         isVisible={selected}
         minWidth={isHorizontal ? ParticipantHorizontalLaneSize.minWidth : ParticipantVerticalLaneSize.minWidth}
