@@ -267,7 +267,8 @@ export const getElements = (dataSource) => {
         }
 
         if (parentId) {
-          node.parentId = parentId
+          node.parentId = parentId;
+          node.extent = 'parent';
         }
 
         if (map.has(props.id)) {
