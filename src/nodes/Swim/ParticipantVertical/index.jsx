@@ -1,6 +1,6 @@
 import React, { memo, useRef } from 'react';
 import { NodeResizer, useReactFlow } from '@xyflow/react';
-import { titleWidth, laneMinWidth } from '../utils';
+import { titleWidth, ParticipantVerticalLaneSize } from '../utils';
 import { useResizeWrap } from '../useResize';
 import '../index.less';
 import Toolbar from '../components/Toolbar';
@@ -15,9 +15,8 @@ const ParticipantVertical = (props) => {
       <NodeResizer
         color="#0095ff"
         isVisible={selected}
-        minWidth={laneMinWidth + titleWidth}
-        // todo
-        // minHeight={wrapHeight / 2}
+        minWidth={ParticipantVerticalLaneSize.minWidth}
+        minHeight={ParticipantVerticalLaneSize.minHeight + titleWidth}
         onResizeStart={handleResizeStart}
         onResizeEnd={handleResizeEnd}
       />

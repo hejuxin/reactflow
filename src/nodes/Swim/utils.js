@@ -6,10 +6,28 @@ let wrapHeight = 300;
 let titleWidth = 50;
 
 let laneCount = 1;
-let laneDefalutWidth = 200;
-let laneDefalutHeight = 200;
+let laneDefalutWidth = 300;
+let laneDefalutHeight = 300;
+
 const laneMinHeight = laneDefalutHeight / 2;
-const laneMinWidth = 300;
+const laneMinWidthHorizontal = 300;
+const laneMinWidthVertical = 200;
+
+
+export const ParticipantHorizontalLaneSize = {
+  defaultWidth: laneDefalutWidth,
+  defaultHeight: laneDefalutHeight,
+  minHeight: laneDefalutHeight / 2,
+  minWidth: laneDefalutWidth
+}
+
+
+export  const ParticipantVerticalLaneSize = {
+  defaultWidth: laneDefalutWidth,
+  defaultHeight: laneDefalutHeight,
+  minWidth: laneDefalutWidth / 2,
+  minHeight: laneDefalutHeight
+}
 
 export const ParticipantHorizontal = 'ParticipantHorizontal';
 export const ParticipantVertical = 'ParticipantVertical';
@@ -492,16 +510,26 @@ function onWrapPositionYChangeEffect({ reactflow, parentId }) {
   });
 }
 
+export function getNodeSize({ node, sizeKey }) {
+  return node[sizeKey] ?? node.measured[sizeKey];
+}
+
+export function getWidth(node) {
+  return getNodeSize({ node, sizeKey: 'width' });
+}
+
 export {
   createSwimLaneNode,
   createParticipant,
   createLane,
-  laneMinWidth,
+  laneMinWidthHorizontal,
+  laneMinWidthVertical,
   laneMinHeight,
   laneDefalutHeight,
   titleWidth,
   deleteLane,
   getLaneNodes,
   handleAddLaneHorizontal,
-  handleAddLaneVertical
+  handleAddLaneVertical,
+  getIsHorizontal
 }

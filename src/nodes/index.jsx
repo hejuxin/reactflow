@@ -1,7 +1,7 @@
 import ToolbarNode from "./ToolbarNode";
 import SelectToolbarNode from "./SelectToolbarNode";
 import GroupNode from "./GroupNode";
-import { ParticipantHorizontalNode, ParticipantVerticalNode, SwimLaneNode, SwimWrapNode } from './Swim'
+import { ParticipantHorizontalNode, ParticipantVerticalNode, SwimLaneNode } from './Swim'
 import Parallel from "./GateWay/Parallel";
 import Exclusive from "./GateWay/Exclusive";
 import Inclusive from "./GateWay/Inclusive";

@@ -1,7 +1,7 @@
 import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
 import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
 import cn from 'classnames';
-import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidth, deleteLane, getLaneNodes, handleAddLaneHorizontal, ParticipantHorizontal, handleAddLaneVertical } from './utils';
+import { createLane, laneDefalutHeight, laneMinHeight, laneMinWidthHorizontal,  ParticipantHorizontalLaneSize, ParticipantVerticalLaneSize, laneMinWidthVertical, getIsHorizontal } from './utils';
 import { useResize } from './useResize'
 import Toolbar from './components/Toolbar';
 import './index.less';
@@ -10,8 +10,8 @@ const LaneNode = (props) => {
   const { selected = false, id, parentId } = props;
 
   const reactflow = useReactFlow();
-  const parentNode = reactflow.getNode(parentId);
-  const isHorizontal = parentNode.type === ParticipantHorizontal;
+
+  const isHorizontal = getIsHorizontal({ parentId, reactflow });
 
   const { handleResizeStart, handleResize, handleResizeEnd, shouldResize, maxHeight } = useResize(id, parentId);
 
@@ -34,8 +34,8 @@ const LaneNode = (props) => {
       <NodeResizer
         color="#0095ff"
         isVisible={selected}
-        minWidth={laneMinWidth}
-        minHeight={laneMinHeight}
+        minWidth={isHorizontal ? ParticipantHorizontalLaneSize.minWidth : ParticipantVerticalLaneSize.minWidth}
+        minHeight={isHorizontal ? ParticipantHorizontalLaneSize.minHeight : ParticipantVerticalLaneSize.minHeight}
         // maxHeight={100}
         shouldResize={shouldResize}
         onResize={handleResize}

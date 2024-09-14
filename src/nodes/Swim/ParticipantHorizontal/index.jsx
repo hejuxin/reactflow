@@ -2,7 +2,7 @@ import React, { memo, useRef } from 'react';
 import { NodeResizer, NodeToolbar, useNodeId, useNodes, useReactFlow } from '@xyflow/react';
 import { Position } from '@xyflow/react';
 import { Button } from 'antd';
-import { createLane, titleWidth, laneMinWidth, laneDefalutHeight, ParticipantLane, getLaneNodes, handleAddLaneHorizontal } from '../utils';
+import { createLane, titleWidth, handleAddLaneHorizontal, ParticipantHorizontalLaneSize } from '../utils';
 import { useResizeWrap } from '../useResize';
 import '../index.less';
 import Toolbar from '../components/Toolbar';
@@ -26,7 +26,7 @@ const ParticipantHorizontal = (props) => {
       <NodeResizer
         color="#0095ff"
         isVisible={selected}
-        minWidth={laneMinWidth + titleWidth}
+        minWidth={ParticipantHorizontalLaneSize.minWidth + titleWidth}
         // todo
         // minHeight={wrapHeight / 2}
         onResizeStart={handleResizeStart}
