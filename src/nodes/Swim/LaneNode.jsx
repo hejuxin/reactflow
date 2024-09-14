@@ -7,27 +7,14 @@ import Toolbar from './components/Toolbar';
 import './index.less';
 
 const LaneNode = (props) => {
-  const { selected: pselected = false, id, parentId } = props;
-  const [selected, setSelected] = useState(false);
+  const { selected = false, id, parentId } = props;
 
   const reactflow = useReactFlow();
-  const nodes = useNodes();
-  const currentNode = reactflow.getNode(id);
   const parentNode = reactflow.getNode(parentId);
   const isHorizontal = parentNode.type === ParticipantHorizontal;
-  const laneNodes = getLaneNodes({ nodes, parentId });
-  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
-  const isFirstNode = id === laneNodes[0].id;
 
   const { handleResizeStart, handleResize, handleResizeEnd, shouldResize, maxHeight } = useResize(id, parentId);
 
-  useEffect(() => {
-    if (pselected && laneNodes.length !== 1) {
-      setSelected(true);
-      return;
-    }
-    setSelected(false);
-  }, [pselected, laneNodes])
 
   const resizerprops = useMemo(() => {
     const newProps = {};
@@ -43,7 +30,7 @@ const LaneNode = (props) => {
   }, [maxHeight]);
 
   return (
-    <div className={cn('laneWrap', { 'noTopborder': isFirstNode })}>
+    <div className='laneWrap'>
       <NodeResizer
         color="#0095ff"
         isVisible={selected}
