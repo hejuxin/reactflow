@@ -1,10 +1,12 @@
 import { getHash } from "@/utils/util";
+import { Position } from "@xyflow/react";
 
 let wrapWidth = 500;
 let wrapHeight = 300;
 let titleWidth = 50;
 
 let laneCount = 1;
+let laneDefalutWidth = 200;
 let laneDefalutHeight = 200;
 const laneMinHeight = laneDefalutHeight / 2;
 const laneMinWidth = 300;
@@ -19,8 +21,9 @@ function laneCountIncrease() {
 
 function createLane({
   parentId,
-  parentWidth,
-  height,
+  width = laneDefalutWidth,
+  height = laneDefalutHeight,
+  positionX = 0,
   positionY = 0,
   id = `${parentId}-${laneCount}`,
 }) {
@@ -28,12 +31,12 @@ function createLane({
     id,
     type: ParticipantLane,
     position: {
-      x: titleWidth,
+      x: positionX,
       y: positionY
     },
     style: {
-      width: parentWidth - titleWidth,
-      height: height ?? laneDefalutHeight
+      width,
+      height
     },
     data: { label: `children node${laneCount}` },
     parentId: parentId,
@@ -95,9 +98,8 @@ function createParticipantVertical({
     type,
     position,
     style: {
-      border: `1px solid red`,
-      width: wrapWidth,
-      height: wrapHeight
+      width: wrapHeight,
+      height: wrapWidth
     },
     // 传入节点 data
     data: { label: `${type} node` },
@@ -112,7 +114,7 @@ function createSwimLaneNode({
   id = getHash()
 }) {
   const wrapNode = createParticipant({ id, position });
-  const laneNode = createLane({ parentId: id, parentWidth: wrapWidth, height: wrapHeight });
+  const laneNode = createLane({ parentId: id, width: wrapWidth - titleWidth, height: wrapHeight });
 
   return [wrapNode, laneNode];
 }
@@ -171,15 +173,11 @@ function getLaneNodes({ nodes, parentId }) {
   return nodes.filter(n => n.parentId === parentId && n.type === ParticipantLane);
 }
 
-function handleAddLane(params) {
-  if (params.isLane ?? true) {
-    handleAddLaneOnLaneNode(params);
-  } else {
-    handleAddLaneOnWrapNode(params);
-  }
+function handleAddLaneHorizontal(isLane = true) {
+  return isLane ? handleAddLaneOnLaneNodeHorizontal : handleAddLaneOnWrapNodeHorizontal
 }
 
-function handleAddLaneOnLaneNode({ direction, reactflow, id, parentId }) {
+function handleAddLaneOnLaneNodeHorizontal({ direction, reactflow, id, parentId }) {
   const nodes = reactflow.getNodes();
   const laneNodes = getLaneNodes({ nodes, parentId });
   const parentNode = reactflow.getNode(parentId);
@@ -190,11 +188,13 @@ function handleAddLaneOnLaneNode({ direction, reactflow, id, parentId }) {
 
   const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
 
+  const parentWidth = parentNode.width ?? parentNode.measured.width;
+  const laneParams = { parentId, width: parentWidth - titleWidth, positionX: titleWidth };
+
   const newNodes = [...nodes];
-  if (direction === 'up') {
+  if (direction === Position.Top) {
     const laneNode = createLane({
-      parentId: parentId,
-      parentWidth: parentNode.width ?? parentNode.measured.width,
+      ...laneParams,
       positionY
     });
 
@@ -226,8 +226,7 @@ function handleAddLaneOnLaneNode({ direction, reactflow, id, parentId }) {
 
   } else {
     const laneNode = createLane({
-      parentId: parentId,
-      parentWidth: parentNode.width ?? parentNode.measured.width,
+      ...laneParams,
       positionY: positionY + (currentNode.height ?? currentNode.measured.height)
     });
 
@@ -253,7 +252,7 @@ function handleAddLaneOnLaneNode({ direction, reactflow, id, parentId }) {
   }
 }
 
-function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
+function handleAddLaneOnWrapNodeHorizontal({ direction, reactflow, id }) {
   const nodes = reactflow.getNodes();
   const parentNode = reactflow.getNode(id);
   const parentWidth = parentNode.width ?? parentNode.measured.width;
@@ -261,16 +260,16 @@ function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
   const nodeIndex = nodes.findIndex(node => node.id === id);
   const laneNodes = getLaneNodes({ nodes, parentId: id });
 
-  const laneNode = createLane({ parentId: id, parentWidth });
+  const laneParams = { parentId: id, width: parentWidth - titleWidth, positionX: titleWidth };
+  const laneNode = createLane(laneParams);
 
-  if (direction === 'up') {
+  if (direction === Position.Top) {
     const newNodes = [...nodes];
 
     if (laneNodes.length === 0) {
       laneNode.style.height = parentHeight;
       const laneNode1 = createLane({
-        parentId: id,
-        parentWidth,
+        ...laneParams,
         positionY: parentHeight
       });
 
@@ -287,11 +286,7 @@ function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
     laneNodes.forEach(node => {
       reactflow.updateNode(node.id, node => {
         const y = node.position.y;
-        if (node.type === ParticipantLane) {
-          node.position.y = y + laneDefalutHeight;
-        } else {
-          node.position.y = y - laneDefalutHeight;
-        }
+        node.position.y = y + laneDefalutHeight;
         return { ...node }
       });
     });
@@ -301,8 +296,7 @@ function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
     if (laneNodes.length === 0) {
       laneNode.style.height = parentHeight;
       const laneNode1 = createLane({
-        parentId: id,
-        parentWidth: parentWidth,
+        ...laneParams,
         positionY: parentHeight
       });
 
@@ -316,6 +310,153 @@ function handleAddLaneOnWrapNode({ direction, reactflow, id }) {
   reactflow.updateNode(id, (node) => {
     node.width = parentWidth;
     node.height = parentHeight + laneDefalutHeight
+    return { ...node }
+  }, { replace: true })
+}
+
+
+function handleAddLaneVertical(isLane = true) {
+  return isLane ? handleAddLaneOnLaneNodeVertical : handleAddLaneOnWrapNodeVertical
+}
+
+function handleAddLaneOnLaneNodeVertical({ direction, reactflow, id, parentId }) {
+  console.log('handleAddLaneOnLaneNodeVertical')
+  const nodes = reactflow.getNodes();
+  const laneNodes = getLaneNodes({ nodes, parentId });
+  const parentNode = reactflow.getNode(parentId);
+  const currentNode = reactflow.getNode(id);
+  const positionY = currentNode.position.y;
+  const positionX = currentNode.position.x;
+
+  const currentNodeIndex = nodes.findIndex(node => node.id === id);
+
+  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+
+  const parentWidth = parentNode.width ?? parentNode.measured.width;
+  const parentHeight = parentNode.height ?? parentNode.measured.height;
+  const laneParams = { parentId, height: parentHeight - titleWidth, positionY: titleWidth };
+
+  const newNodes = [...nodes];
+  if (direction === Position.Left) {
+    const laneNode = createLane({
+      ...laneParams,
+      positionX
+    });
+
+    
+    newNodes.splice(currentNodeIndex, 0, laneNode);
+    console.log(newNodes);
+    reactflow.setNodes(newNodes);
+    // reactflow.addNodes(laneNode);
+
+    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
+    console.log(needChangeNodes, 'needChangeNodes')
+
+    needChangeNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const x = node.position.x;
+        node.position.x = x + laneDefalutWidth;
+        return { ...node }
+      });
+    });
+
+
+
+    reactflow.updateNode(parentId, (node) => {
+      node.width = (node.width ?? node.measured.width) + laneDefalutWidth;
+      node.height = (node.height ?? node.measured.height);
+      const x = node.position.x;
+      node.position.x = x - laneDefalutWidth;
+    })
+
+    // onWrapPositionYChangeEffect({ reactflow, parentId })
+
+
+  } else {
+    const laneNode = createLane({
+      ...laneParams,
+      positionX: positionX + (currentNode.width ?? currentNode.measured.width)
+    });
+
+    newNodes.splice(currentNodeIndex + 1, 0, laneNode);
+    reactflow.setNodes(newNodes);
+    // reactflow.addNodes(laneNode);
+
+    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes + 1);
+
+    needChangeNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const x = node.position.x;
+        node.position.x = x + laneDefalutHeight;
+        return { ...node }
+      });
+    });
+
+    reactflow.updateNode(parentId, (node) => {
+      node.width = (node.width ?? node.measured.width) + laneDefalutWidth;
+      node.height = (node.height ?? node.measured.height);
+      return { ...node }
+    }, { replace: true })
+  }
+}
+function handleAddLaneOnWrapNodeVertical({ direction, reactflow, id }) {
+  const nodes = reactflow.getNodes();
+  const parentNode = reactflow.getNode(id);
+  const parentWidth = parentNode.width ?? parentNode.measured.width;
+  const parentHeight = parentNode.height ?? parentNode.measured.height;
+  const nodeIndex = nodes.findIndex(node => node.id === id);
+  const laneNodes = getLaneNodes({ nodes, parentId: id });
+
+  const laneParams = { parentId: id, height: parentHeight - titleWidth, positionY: titleWidth };
+  const laneNode = createLane(laneParams);
+
+  if (direction === Position.Left) {
+    const newNodes = [...nodes];
+
+    if (laneNodes.length === 0) {
+      laneNode.style.width = parentWidth;
+      const laneNode1 = createLane({
+        ...laneParams,
+        positionX: parentWidth
+      });
+
+      newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
+    } else {
+      newNodes.splice(nodeIndex + 1, 0, laneNode);
+    }
+
+    reactflow.updateNode(id, node => {
+      const x = node.position.x;
+      node.position.x = x - laneDefalutWidth;
+    })
+
+    laneNodes.forEach(node => {
+      reactflow.updateNode(node.id, node => {
+        const x = node.position.x;
+        node.position.x = x + laneDefalutWidth;
+        return { ...node }
+      });
+    });
+
+    reactflow.setNodes(newNodes);
+  } else {
+    if (laneNodes.length === 0) {
+      laneNode.style.width = parentWidth;
+      const laneNode1 = createLane({
+        ...laneParams,
+        positionX: parentWidth
+      });
+
+      reactflow.addNodes([laneNode, laneNode1]);
+    } else {
+      laneNode.position.x = parentWidth;
+      reactflow.addNodes(laneNode);
+    }
+  }
+
+  reactflow.updateNode(id, (node) => {
+    node.width = parentWidth + laneDefalutWidth;
+    node.height = parentHeight;
     return { ...node }
   }, { replace: true })
 }
@@ -347,5 +488,6 @@ export {
   titleWidth,
   deleteLane,
   getLaneNodes,
-  handleAddLane
+  handleAddLaneHorizontal,
+  handleAddLaneVertical
 }
