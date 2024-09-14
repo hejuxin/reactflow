@@ -119,50 +119,64 @@ function createSwimLaneNode({
   return [wrapNode, laneNode];
 }
 
+function getIsHorizontal({ parentId, reactflow }) {
+  const parentNode = reactflow.getNode(parentId);
+  const isHorizontal = parentNode.type === ParticipantHorizontal;
+  return isHorizontal;
+}
+
 function deleteLane({ id, reactflow }) {
   const currentNode = reactflow.getNode(id);
   const parentId = currentNode.parentId;
-  const currentNodeHeight = currentNode.height ?? currentNode.measured.height;
 
   const nodes = reactflow.getNodes();
   const laneNodes = getLaneNodes({ nodes, parentId });
-  const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+  const laneNodesLength = laneNodes.length;
+
+  if (laneNodesLength === 1) return;
+
   const isFirstNode = id === laneNodes[0].id;
+  const isLastNode = id === laneNodes[laneNodesLength - 1].id;
+
+  const isHorizontal = getIsHorizontal({ parentId, reactflow });
+  const sizeKey = isHorizontal ? 'height' : 'width';
+  const positionKey = isHorizontal ? 'y' : 'x';
+  const currentNodeSize = currentNode[sizeKey] ?? currentNode.measured[sizeKey];
+
   if (isFirstNode) {
     const needChangeNode = laneNodes[1];
     reactflow.updateNode(needChangeNode.id, node => {
-      const height = node.height ?? node.measured.height;
+      const size = node[sizeKey] ?? node.measured[sizeKey];
 
-      node.height = height + currentNodeHeight;
-      node.position.y = 0;
+      node[sizeKey] = size + currentNodeSize;
+      node.position[positionKey] = 0;
       return { ...node }
     });
-  } else if (id === laneNodes[laneNodes.length - 1].id) {
-    const needChangeNode = laneNodes[laneNodes.length - 2];
+  } else if (isLastNode) {
+    const needChangeNode = laneNodes[laneNodesLength - 2];
     reactflow.updateNode(needChangeNode.id, node => {
-      const height = node.height ?? node.measured.height;
+      const size = node[sizeKey] ?? node.measured[sizeKey];
 
-      node.height = height + currentNodeHeight;
-      return { ...node }
+      node[sizeKey] = size + currentNodeSize;
     });
   } else {
+    const currentIndexInLaneNodes = laneNodes.findIndex(node => node.id === id);
+
     const needChangeNode1 = laneNodes[currentIndexInLaneNodes - 1];
     const needChangeNode2 = laneNodes[currentIndexInLaneNodes + 1];
 
     reactflow.updateNode(needChangeNode1.id, node => {
-      const height = node.height ?? node.measured.height;
+      const size = node[sizeKey] ?? node.measured[sizeKey];
 
-      node.height = height + (currentNodeHeight / 2);
-      return { ...node }
+      node[sizeKey] = size + (currentNodeSize / 2);
     });
 
     reactflow.updateNode(needChangeNode2.id, node => {
-      const height = node.height ?? node.measured.height;
-      node.height = height + (currentNodeHeight / 2);
+      const size = node[sizeKey] ?? node.measured[sizeKey];
+      node[sizeKey] = size + (currentNodeSize / 2);
 
-      const y = node.position.y;
-      node.position.y = y - (currentNodeHeight / 2);
-      return { ...node }
+      const currentPosition = node.position[positionKey];
+      node.position[positionKey] = currentPosition - (currentNodeSize / 2);
     });
   }
 
@@ -343,7 +357,7 @@ function handleAddLaneOnLaneNodeVertical({ direction, reactflow, id, parentId })
       positionX
     });
 
-    
+
     newNodes.splice(currentNodeIndex, 0, laneNode);
     console.log(newNodes);
     reactflow.setNodes(newNodes);
