@@ -1,10 +1,9 @@
 import { memo } from "react";
 import { NodeResizeControl } from "@xyflow/react";
-import { XY_RESIZER_LINE_POSITIONS, XY_RESIZER_HANDLE_POSITIONS } from "@xyflow/system";
 import './index.less';
 
 const Resizer = props => {
-  const handles = [...XY_RESIZER_LINE_POSITIONS, ...XY_RESIZER_HANDLE_POSITIONS];
+  const handles = ['top', 'right', 'bottom', 'left', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
   if (!props.isVisible) return null;
   
