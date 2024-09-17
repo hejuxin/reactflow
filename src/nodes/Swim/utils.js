@@ -31,6 +31,7 @@ export  const ParticipantVerticalLaneSize = {
 
 export const ParticipantHorizontal = 'ParticipantHorizontal';
 export const ParticipantVertical = 'ParticipantVertical';
+export const ParticipantLaneSet = 'ParticipantLaneSet';
 export const ParticipantLane = 'ParticipantLane';
 
 function laneCountIncrease() {
@@ -60,7 +61,7 @@ function createLane({
     parentId: parentId,
     // extent: 'parent',
     draggable: false,
-    zIndex: 6
+    zIndex: 7
   }
 
   laneCountIncrease();
@@ -85,12 +86,11 @@ function createParticipant({
 
 function createParticipantHorizontal({
   position,
-  id
+  id = getHash()
 }) {
-  const nodeId = id ?? getHash();
   const type = ParticipantHorizontal;
   const node = {
-    id: nodeId,
+    id,
     type,
     position,
     style: {
@@ -107,12 +107,11 @@ function createParticipantHorizontal({
 
 function createParticipantVertical({
   position,
-  id
+  id = getHash()
 }) {
-  const nodeId = id ?? getHash();
   const type = ParticipantVertical;
   const node = {
-    id: nodeId,
+    id,
     type,
     position,
     style: {
@@ -122,6 +121,35 @@ function createParticipantVertical({
     // 传入节点 data
     data: { label: `${type} node` },
     zIndex: 5
+  };
+
+  return node;
+}
+
+export function createParticipantLaneSet({
+  position,
+  id,
+  isHorizontal = true
+}) {
+  const type = ParticipantLaneSet;
+  const style = {
+    width: isHorizontal ? wrapWidth : wrapHeight,
+    height: isHorizontal ? wrapHeight : wrapWidth
+  }
+  const node = {
+    id,
+    type,
+    position: {
+      x: isHorizontal ? position.x + titleWidth : position.x,
+      y: isHorizontal ? position.y : position.y + titleWidth
+    },
+    style: {
+      ...style,
+      width: style.width - titleWidth,
+    },
+    // 传入节点 data
+    data: { label: `${type} node` },
+    zIndex: 6
   };
 
   return node;

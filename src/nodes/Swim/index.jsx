@@ -1,9 +1,11 @@
-import LaneNode from "./LaneNode";
 import ParticipantHorizontal from "./ParticipantHorizontal";
 import ParticipantVertical from "./ParticipantVertical";
+import ParticipantLane from "./ParticipantLane";
+import ParticipantLaneSet from "./ParticipantLaneSet";
 
 export {
-  LaneNode as SwimLaneNode,
+  ParticipantLane as ParticipantLaneNode,
+  ParticipantLaneSet as ParticipantLaneSetNode,
   ParticipantHorizontal as ParticipantHorizontalNode,
   ParticipantVertical as ParticipantVerticalNode
 }

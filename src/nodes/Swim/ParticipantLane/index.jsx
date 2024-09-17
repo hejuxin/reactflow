@@ -1,11 +1,11 @@
-import React, { memo, useState, useMemo, useRef, useEffect } from 'react';
-import { NodeResizer, NodeToolbar, useNodes, useReactFlow } from '@xyflow/react';
-import { ParticipantHorizontalLaneSize, ParticipantVerticalLaneSize, laneMinWidthVertical, getIsHorizontal } from './utils';
-import { useResize } from './useResize'
-import { Toolbar, Resizer } from './components';
-import './index.less';
+import React, { memo, useMemo } from 'react';
+import { useReactFlow } from '@xyflow/react';
+import { ParticipantHorizontalLaneSize, ParticipantVerticalLaneSize, getIsHorizontal } from '../utils';
+import { useResize } from '../useResize'
+import { Toolbar, Resizer } from '../components';
+import '../index.less';
 
-const LaneNode = (props) => {
+const ParticipantLane = (props) => {
   const { selected = false, id, parentId } = props;
 
   const reactflow = useReactFlow();
@@ -48,4 +48,4 @@ const LaneNode = (props) => {
   )
 }
 
-export default memo(LaneNode);
+export default memo(ParticipantLane);
