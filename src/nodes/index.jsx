@@ -1,13 +1,13 @@
 import ToolbarNode from "./ToolbarNode";
 import SelectToolbarNode from "./SelectToolbarNode";
 import GroupNode from "./GroupNode";
-import { SwimLaneNode, SwimWrapNode } from './Swim'
+import { ParticipantHorizontalNode, ParticipantVerticalNode, ParticipantLaneNode, ParticipantLaneSetNode } from './Swim'
 import Parallel from "./GateWay/Parallel";
 import Exclusive from "./GateWay/Exclusive";
 import Inclusive from "./GateWay/Inclusive";
 import Start from "./Events/StartEvent";
 import End from "./Events/EndEvent";
-import { ParticipantLane, ParticipantHorizontal } from "./Swim/utils";
+import { ParticipantLane, ParticipantHorizontal, ParticipantVertical, ParticipantLaneSet } from "./Swim/utils";
 
 const nodeTypesArr = [
   {
@@ -26,14 +26,25 @@ const nodeTypesArr = [
     component: GroupNode
   },
   {
-    name: '泳道',
+    name: '水平泳道',
     type: ParticipantHorizontal,
-    component: SwimWrapNode
+    component: ParticipantHorizontalNode
+  },
+  {
+    name: '垂直泳道',
+    type: ParticipantVertical,
+    component: ParticipantVerticalNode
+  },
+  {
+    name: '泳道set',
+    type: ParticipantLaneSet,
+    component: ParticipantLaneSetNode,
+    show: false
   },
   {
     name: '子泳道',
     type: ParticipantLane,
-    component: SwimLaneNode,
+    component: ParticipantLaneNode,
     show: false
   },
   {
@@ -70,7 +81,7 @@ const nodeTypesArr = [
 //   selecttools: SelectToolbarNode,
 //   group: GroupNode,
 //   swimwrap: SwimWrapNode,
-//   swimlane: SwimLaneNode,
+//   swimlane: ParticipantLaneNode,
 //   "parallel-gateway": Parallel,
 //   "exclusive-gateway": Exclusive,
 //   "inclusive-gateway": Inclusive,

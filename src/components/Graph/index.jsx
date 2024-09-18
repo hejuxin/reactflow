@@ -26,7 +26,7 @@ import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
-import { createSwimLaneNode, deleteLane, ParticipantLane, ParticipantHorizontal } from "@/nodes/Swim/utils";
+import { createParticipant, deleteLane, ParticipantLane, ParticipantHorizontal, ParticipantVertical, createParticipantLaneSet } from "@/nodes/Swim/utils";
 import { Slider, Toolbar } from "..";
 
 const Graph = () => {
@@ -141,10 +141,17 @@ const Graph = () => {
       });
 
       if (type === ParticipantHorizontal) {
-        const swimLaneNode = createSwimLaneNode({ position });
+        const participant = createParticipant({ position });
+        newNodeRef.current = participant;
 
-        reactFlowInstance.addNodes(swimLaneNode)
-        newNodeRef.current = swimLaneNode[0];
+        const participantLaneSet = createParticipantLaneSet({ position });
+
+        reactFlowInstance.addNodes([participant, participantLaneSet]);
+      } else if (type === ParticipantVertical) {
+        const participant = createParticipant({ position, isHorizontal: false });
+
+        reactFlowInstance.addNodes(participant);
+        newNodeRef.current = participant;
       } else {
         const id = getHash()
         const newNode = {
@@ -187,6 +194,7 @@ const Graph = () => {
 
         if (intersectingNodes.length) {
           // todo 如果有多个交集
+          console.log(intersectingNodes, 'intersectingNodes');
           const intersectingNode = intersectingNodes[0];
 
           reactFlowInstance?.updateNode(newNode.id, (node) => {

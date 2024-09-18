@@ -33,7 +33,7 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'participant') {
-          const participantnode = createParticipant({ id: props.id, position: {x: 0, y: 0} });
+          const participantnode = createParticipant({ id: props.id, position: { x: 0, y: 0 } });
 
           participantnode.title = props.name;
           nodes.push(participantnode);
@@ -45,7 +45,7 @@ export const getElements = (dataSource) => {
           const nodeId = map.get(props.id);
           formatToNode(children, nodeId);
           return;
-          
+
         }
 
         if (element.name === 'laneSet') {
@@ -54,7 +54,7 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'lane') {
-          const node = createLane({ parentId, parentWidth: 0 });
+          const node = createLane({ parentId });
           node._id = props.id;
           nodes.push(node);
           return;
@@ -83,7 +83,21 @@ export const getElements = (dataSource) => {
             const node = nodes[index];
             // 如果是子泳道直接返回
             if (node.type !== ParticipantLane) {
-              node.type = props.isHorizontal ? ParticipantHorizontal : ParticipantVertical;
+              let isHorizontal = props.isHorizontal;
+              if (typeof props.isHorizontal === 'boolean' && props.isHorizontal) {
+                isHorizontal = props.isHorizontal;
+              }
+
+              if (typeof props.isHorizontal === 'string') {
+                switch (props.isHorizontal) {
+                  case 'false':
+                    isHorizontal = false;
+                    break;
+                  default:
+                    isHorizontal = true
+                }
+              }
+              node.type = isHorizontal ? ParticipantHorizontal : ParticipantVertical;
 
               nodes[index] = node;
             }
@@ -117,7 +131,7 @@ export const getElements = (dataSource) => {
             position.y = position.y - parentNode.position.y;
           }
 
-          
+
           node.style = {
             ...node.style,
             ...style
@@ -253,7 +267,8 @@ export const getElements = (dataSource) => {
         }
 
         if (parentId) {
-          node.parentId = parentId
+          node.parentId = parentId;
+          node.extent = 'parent';
         }
 
         if (map.has(props.id)) {
