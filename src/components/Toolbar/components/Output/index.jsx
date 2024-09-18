@@ -87,18 +87,51 @@ const Output = () => {
     const processId = `Process_1`;
     const defaultProcess = createElement({ name: "process", id: processId });
 
-    const nodeElements = nodes.map(n => {
-      const nodeElement = createElement({ name: n.type, id: n.id });
+    const nodeElements = [];
+    const styleElements = [];
+
+    nodes.forEach(n => {
+      const id = n.id;
+      const nodeElement = createElement({ name: n.type, id });
       const nodeAttr = nodeElement.attributes;
       nodeAttr.name = n.title;
       nodeElement.attributes = nodeAttr;
+      nodeElements.push(nodeElement);
 
-      return nodeElement;
+
+      const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
+      const styleAttr = styleElement.attributes;
+      styleAttr.bpmnElement = id;
+      styleElement.attributes = styleAttr;
+
+      const bounds = createElement({ name: "omgdc:Bounds" });
+      bounds.attributes = {
+        ...n.position,
+        ...n.style
+      }
+
+      styleElement.elements = [bounds];
+      styleElements.push(styleElement);
     })
 
     defaultProcess.elements = nodeElements;
 
-    definitions.elements = [defaultProcess];
+
+    const BPMNDiagram = createElement({
+      name: "bpmndi:BPMNDiagram",
+      id: `BPMNDiagram_1`
+    })
+
+    const BPMNPlane = createElement({
+      name: "bpmndi:BPMNPlane",
+      id: `BPMNPlane_1`
+    })
+
+    BPMNPlane.attributes.bpmnElement = processId;
+    BPMNPlane.elements = styleElements;
+    BPMNDiagram.elements = [BPMNPlane];
+
+    definitions.elements = [defaultProcess, BPMNDiagram];
 
 
     const result = {
