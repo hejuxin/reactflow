@@ -1,4 +1,4 @@
-import { getLaneNodes, ParticipantHorizontal, ParticipantVertical } from "@/nodes/Swim/utils";
+import { getLaneNodes, ParticipantHorizontal, ParticipantLane, ParticipantVertical } from "@/nodes/Swim/utils";
 import { getHash } from "@/utils/util";
 import { useReactFlow, Position } from "@xyflow/react"
 import { Button } from "antd";
@@ -54,6 +54,23 @@ const createElement = ({
       id
     },
     elements: []
+  }
+}
+
+function createPlaceholderElement({
+  type = "element",
+  name,
+  text
+}) {
+  return {
+    type,
+    name,
+    elements: [
+      {
+        type: "text",
+        text
+      }
+    ]
   }
 }
 
@@ -113,10 +130,11 @@ const Output = () => {
 
         if (laneNodes.length) {
           const laneSet = createElement({ name: "laneSet", id: `LaneSet_${getHash()}` });
+          const laneElements = [];
           laneNodes.forEach(l => {
-            const id = `lane_${getHash()}`;
+            const id = l.id;
             const laneElement = createElement({ name: "lane", id });
-            laneSet.elements.push(laneElement);
+            laneElements.push(laneElement);
 
             const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
             const styleAttr = styleElement.attributes;
@@ -135,7 +153,47 @@ const Output = () => {
             styleElements.push(styleElement);
           })
 
-          process.elements.push(laneSet);
+          const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
+          const nodeElements = [];
+          normalNodes.forEach(n => {
+            const intersectingNodes = reactflow.getIntersectingNodes(n);
+
+            const intersectingLaneNodes = intersectingNodes.filter(n => n.type === ParticipantLane);
+            const intersectingLaneNode = intersectingLaneNodes[0];
+            const laneNode = laneElements.find(l => l.attributes.id === intersectingLaneNode.id);
+
+            const id = n.id;
+            const nodeElement = createElement({ name: n.type, id });
+            const nodeAttr = nodeElement.attributes;
+            nodeAttr.name = n.title;
+            nodeElement.attributes = nodeAttr;
+            nodeElements.push(nodeElement);
+
+            const flowNodeRef = createPlaceholderElement({ name: "flowNodeRef", text: id });
+
+            laneNode.elements.push(flowNodeRef);
+
+            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
+            const styleAttr = styleElement.attributes;
+            styleAttr.bpmnElement = id;
+            styleElement.attributes = styleAttr;
+
+            const bounds = createElement({ name: "omgdc:Bounds" });
+
+            const parentNode = nodes.find(p => p.id === n.parentId);
+            bounds.attributes = {
+              x: parentNode.position.x + n.position.x,
+              y: parentNode.position.y + n.position.y,
+              ...n.style
+            }
+
+            styleElement.elements = [bounds];
+            styleElements.push(styleElement);
+          })
+
+          laneSet.elements = laneElements;
+          process.elements.push(laneSet, ...nodeElements);
+          // process.elements.push(nodeElements)
 
         }
         processes.push(process);
@@ -150,8 +208,8 @@ const Output = () => {
         const bounds = createElement({ name: "omgdc:Bounds" });
         bounds.attributes = {
           ...n.position,
-          width: n.width ?? n.measure.width ?? n.style.width,
-          height: n.height ?? n.measure.height ?? n.style.height
+          width: n.width ?? n.measured.width ?? n.style.width,
+          height: n.height ?? n.measured.height ?? n.style.height
         }
 
         styleElement.elements = [bounds];
@@ -230,13 +288,7 @@ const Output = () => {
         if (edge.source) {
           edgeNodeElement.attributes.sourceRef = edge.source;
           const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
-          const sourceElement = createElement({ name: "outgoing" });
-          sourceElement.elements = [
-            {
-              type: "text",
-              text: edge.id
-            }
-          ]
+          const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
           nodeElement.elements.push(sourceElement);
 
           const node = nodes.find(n => n.id === edge.source);
@@ -251,13 +303,7 @@ const Output = () => {
         if (edge.target) {
           edgeNodeElement.attributes.targetRef = edge.target;
           const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
-          const sourceElement = createElement({ name: "incoming" });
-          sourceElement.elements = [
-            {
-              type: "text",
-              text: edge.id
-            }
-          ]
+          const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
           nodeElement.elements.push(sourceElement);
 
           const node = nodes.find(n => n.id === edge.target);
@@ -271,7 +317,7 @@ const Output = () => {
 
         BPMNPlane.elements.push(BPMNEdge);
 
-        edgeNodeElement.push(edgeNodeElement);
+        nodeElements.push(edgeNodeElement);
       })
 
       defaultProcess.elements = nodeElements;
@@ -284,7 +330,7 @@ const Output = () => {
       elements: [definitions]
     }
 
-    const content = convert.js2xml(result);
+    const content = convert.js2xml(result, { spaces: 4 });
     console.log(content)
     download(content);
   }
