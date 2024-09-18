@@ -82,11 +82,10 @@ const Output = () => {
   const reactflow = useReactFlow();
   const handleOutput = () => {
 
-    const { nodes } = reactflow.toObject()
-    console.log(nodes, 'nodes')
+    const { nodes, edges } = reactflow.toObject()
+    console.log(nodes, 'nodes', edges)
     const processId = `Process_1`;
     const defaultProcess = createElement({ name: "process", id: processId });
-
     const nodeElements = [];
     const styleElements = [];
 
@@ -114,7 +113,6 @@ const Output = () => {
       styleElements.push(styleElement);
     })
 
-    defaultProcess.elements = nodeElements;
 
 
     const BPMNDiagram = createElement({
@@ -129,8 +127,62 @@ const Output = () => {
 
     BPMNPlane.attributes.bpmnElement = processId;
     BPMNPlane.elements = styleElements;
-    BPMNDiagram.elements = [BPMNPlane];
 
+    edges.forEach(edge => {
+      const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
+
+      const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
+      BPMNEdge.attributes.bpmnElement = edge.id;
+
+      if (edge.source) {
+        edgeNodeElement.attributes.sourceRef = edge.source;
+        const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
+        const sourceElement = createElement({ name: "outgoing" });
+        sourceElement.elements = [
+          {
+            type: "text",
+            text: edge.id
+          }
+        ]
+        nodeElement.elements.push(sourceElement);
+
+        const node = nodes.find(n => n.id === edge.source);
+        const waypoint = createElement({ name: "di:waypoint" });
+        const handle = edge.sourceHandle;
+        const position = getPosition(handle, node);
+
+        waypoint.attributes = position;
+        BPMNEdge.elements.push(waypoint);
+      }
+
+      if (edge.target) {
+        edgeNodeElement.attributes.targetRef = edge.target;
+        const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
+        const sourceElement = createElement({ name: "incoming" });
+        sourceElement.elements = [
+          {
+            type: "text",
+            text: edge.id
+          }
+        ]
+        nodeElement.elements.push(sourceElement);
+
+        const node = nodes.find(n => n.id === edge.target);
+        const waypoint = createElement({ name: "di:waypoint" });
+        const handle = edge.targetHandle;
+        const position = getPosition(handle, node);
+
+        waypoint.attributes = position;
+        BPMNEdge.elements.push(waypoint);
+      }
+
+      BPMNPlane.elements.push(BPMNEdge);
+
+      edgeNodeElement.push(edgeNodeElement);
+    })
+
+    defaultProcess.elements = nodeElements;
+    BPMNDiagram.elements = [BPMNPlane];
     definitions.elements = [defaultProcess, BPMNDiagram];
 
 
@@ -140,8 +192,6 @@ const Output = () => {
     }
 
     const content = convert.js2xml(result);
-    console.log(content);
-    
     download(content);
   }
   return (
