@@ -1,4 +1,4 @@
-import { ParticipantHorizontal, ParticipantVertical } from "@/nodes/Swim/utils";
+import { getLaneNodes, ParticipantHorizontal, ParticipantVertical } from "@/nodes/Swim/utils";
 import { getHash } from "@/utils/util";
 import { useReactFlow, Position } from "@xyflow/react"
 import { Button } from "antd";
@@ -107,7 +107,37 @@ const Output = () => {
         element.attributes = attributes;
         participantElements.push(element);
 
+        const laneNodes = getLaneNodes({ nodes, parentId: id });
+
         const process = createElement({ name: "process", id: processId });
+
+        if (laneNodes.length) {
+          const laneSet = createElement({ name: "laneSet", id: `LaneSet_${getHash()}` });
+          laneNodes.forEach(l => {
+            const id = `lane_${getHash()}`;
+            const laneElement = createElement({ name: "lane", id });
+            laneSet.elements.push(laneElement);
+
+            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
+            const styleAttr = styleElement.attributes;
+            styleAttr.bpmnElement = id;
+            styleAttr.isHorizontal = n.type === ParticipantHorizontal;
+            styleElement.attributes = styleAttr;
+
+            const bounds = createElement({ name: "omgdc:Bounds" });
+            bounds.attributes = {
+              x: l.position.x + n.position.x,
+              y: l.position.y + n.position.y,
+              ...l.style
+            }
+
+            styleElement.elements = [bounds];
+            styleElements.push(styleElement);
+          })
+
+          process.elements.push(laneSet);
+
+        }
         processes.push(process);
 
 
@@ -120,7 +150,8 @@ const Output = () => {
         const bounds = createElement({ name: "omgdc:Bounds" });
         bounds.attributes = {
           ...n.position,
-          ...n.style
+          width: n.width ?? n.measure.width ?? n.style.width,
+          height: n.height ?? n.measure.height ?? n.style.height
         }
 
         styleElement.elements = [bounds];
