@@ -74,6 +74,88 @@ function createPlaceholderElement({
   }
 }
 
+function getEdgeElement({
+  edges,
+  nodeElements,
+  nodes,
+  parentId,
+  BPMNPlane
+}) {
+  edges.forEach(edge => {
+    const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
+
+    const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
+    BPMNEdge.attributes.bpmnElement = edge.id;
+
+    if (edge.source) {
+      edgeNodeElement.attributes.sourceRef = edge.source;
+      const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
+      const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
+      nodeElement.elements.push(sourceElement);
+
+      const node = nodes.find(n => n.id === edge.source);
+      const waypoint = createElement({ name: "di:waypoint" });
+      // 默认为右边
+      let position = {
+        x: node.position.x + node.style.width,
+        y: node.position.y + (node.style.height) / 2
+      }
+      const handle = edge.sourceHandle;
+      if (handle) {
+        position = getPosition(handle, node);
+      }
+      if (parentId) {
+        const parentNode = nodes.find(p => p.id === parentId);
+        waypoint.attributes = {
+          x: position.x + parentNode.position.x,
+          y: position.y + parentNode.position.y,
+        };
+      } else {
+        waypoint.attributes = position;
+      }
+
+      BPMNEdge.elements.push(waypoint);
+    }
+
+    if (edge.target) {
+      edgeNodeElement.attributes.targetRef = edge.target;
+      const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
+      const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
+      nodeElement.elements.push(sourceElement);
+
+      const node = nodes.find(n => n.id === edge.target);
+      const waypoint = createElement({ name: "di:waypoint" });
+
+      // 默认为左边
+      let position = {
+        x: node.position.x,
+        y: node.position.y + (node.style.height) / 2
+      }
+      const handle = edge.targetHandle;
+      if (handle) {
+        position = getPosition(handle, node);
+      }
+
+      if (parentId) {
+        const parentNode = nodes.find(p => p.id === parentId);
+        waypoint.attributes = {
+          x: position.x + parentNode.position.x,
+          y: position.y + parentNode.position.y,
+        };
+      } else {
+        waypoint.attributes = position;
+      }
+      BPMNEdge.elements.push(waypoint);
+    }
+
+    BPMNPlane.elements.push(BPMNEdge);
+
+    nodeElements.push(edgeNodeElement);
+
+    // BPMNDiagram.elements = [BPMNPlane];
+  })
+}
+
 const declaration = {
   attributes: {
     version: "1.0",
@@ -202,7 +284,7 @@ const Output = () => {
           })
 
           laneSet.elements = laneElements;
-          
+
           // process.elements.push(nodeElements)
         } else {
           const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
@@ -234,55 +316,12 @@ const Output = () => {
           })
         }
 
-        edges.forEach(edge => {
-          const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
-
-          const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
-          BPMNEdge.attributes.bpmnElement = edge.id;
-
-          if (edge.source) {
-            edgeNodeElement.attributes.sourceRef = edge.source;
-            const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
-            const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
-            nodeElement.elements.push(sourceElement);
-
-            const node = nodes.find(n => n.id === edge.source);
-            const waypoint = createElement({ name: "di:waypoint" });
-            const handle = edge.sourceHandle;
-            const position = getPosition(handle, node);
-            const parentNode = nodes.find(p => p.id === n.id);
-            waypoint.attributes = {
-              x: position.x + parentNode.position.x,
-              y: position.y + parentNode.position.y,
-            };
-            BPMNEdge.elements.push(waypoint);
-          }
-
-          if (edge.target) {
-            edgeNodeElement.attributes.targetRef = edge.target;
-            const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
-            const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
-            nodeElement.elements.push(sourceElement);
-
-            const node = nodes.find(n => n.id === edge.target);
-            const waypoint = createElement({ name: "di:waypoint" });
-            const handle = edge.targetHandle;
-            const position = getPosition(handle, node);
-
-            // waypoint.attributes = position;
-            const parentNode = nodes.find(p => p.id === n.id);
-            waypoint.attributes = {
-              x: position.x + parentNode.position.x,
-              y: position.y + parentNode.position.y,
-            };
-            BPMNEdge.elements.push(waypoint);
-          }
-
-          BPMNPlane.elements.push(BPMNEdge);
-
-          nodeElements.push(edgeNodeElement);
-
-          // BPMNDiagram.elements = [BPMNPlane];
+        getEdgeElement({
+          nodes,
+          nodeElements,
+          edges,
+          parentId: n.id,
+          BPMNPlane
         })
 
         process.elements.push(laneSet, ...nodeElements)
@@ -306,12 +345,12 @@ const Output = () => {
         styleElement.elements = [bounds];
         styleElements.push(styleElement);
 
-        
+
       });
 
       collaboration.elements = participantElements;
 
-      
+
 
       BPMNPlane.attributes.bpmnElement = collaborationId;
       BPMNPlane.elements.push(...styleElements);
@@ -361,45 +400,11 @@ const Output = () => {
       BPMNPlane.attributes.bpmnElement = processId;
       BPMNPlane.elements = styleElements;
 
-      edges.forEach(edge => {
-        const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
-
-        const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
-        BPMNEdge.attributes.bpmnElement = edge.id;
-
-        if (edge.source) {
-          edgeNodeElement.attributes.sourceRef = edge.source;
-          const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
-          const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
-          nodeElement.elements.push(sourceElement);
-
-          const node = nodes.find(n => n.id === edge.source);
-          const waypoint = createElement({ name: "di:waypoint" });
-          const handle = edge.sourceHandle;
-          const position = getPosition(handle, node);
-
-          waypoint.attributes = position;
-          BPMNEdge.elements.push(waypoint);
-        }
-
-        if (edge.target) {
-          edgeNodeElement.attributes.targetRef = edge.target;
-          const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
-          const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
-          nodeElement.elements.push(sourceElement);
-
-          const node = nodes.find(n => n.id === edge.target);
-          const waypoint = createElement({ name: "di:waypoint" });
-          const handle = edge.targetHandle;
-          const position = getPosition(handle, node);
-
-          waypoint.attributes = position;
-          BPMNEdge.elements.push(waypoint);
-        }
-
-        BPMNPlane.elements.push(BPMNEdge);
-
-        nodeElements.push(edgeNodeElement);
+      getEdgeElement({
+        edges,
+        nodes,
+        nodeElements,
+        BPMNPlane
       })
 
       defaultProcess.elements = nodeElements;
