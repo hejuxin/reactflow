@@ -114,6 +114,16 @@ const Output = () => {
       const participantElements = [];
       const styleElements = [];
 
+      const BPMNDiagram = createElement({
+        name: "bpmndi:BPMNDiagram",
+        id: `BPMNDiagram_1`
+      })
+
+      const BPMNPlane = createElement({
+        name: "bpmndi:BPMNPlane",
+        id: `BPMNPlane_1`
+      })
+
       participantNodes.forEach(n => {
         const id = n.id;
         const element = createElement({ name: "participant", id });
@@ -128,8 +138,9 @@ const Output = () => {
 
         const process = createElement({ name: "process", id: processId });
 
+        const nodeElements = [];
+        const laneSet = createElement({ name: "laneSet", id: `LaneSet_${getHash()}` });
         if (laneNodes.length) {
-          const laneSet = createElement({ name: "laneSet", id: `LaneSet_${getHash()}` });
           const laneElements = [];
           laneNodes.forEach(l => {
             const id = l.id;
@@ -154,7 +165,6 @@ const Output = () => {
           })
 
           const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
-          const nodeElements = [];
           normalNodes.forEach(n => {
             const intersectingNodes = reactflow.getIntersectingNodes(n);
 
@@ -192,11 +202,92 @@ const Output = () => {
           })
 
           laneSet.elements = laneElements;
-          process.elements.push(laneSet, ...nodeElements);
+          
           // process.elements.push(nodeElements)
+        } else {
+          const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
 
+          normalNodes.forEach(n => {
+            const id = n.id;
+            const nodeElement = createElement({ name: n.type, id });
+            const nodeAttr = nodeElement.attributes;
+            nodeAttr.name = n.title;
+            nodeElement.attributes = nodeAttr;
+            nodeElements.push(nodeElement);
+
+            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
+            const styleAttr = styleElement.attributes;
+            styleAttr.bpmnElement = id;
+            styleElement.attributes = styleAttr;
+
+            const bounds = createElement({ name: "omgdc:Bounds" });
+
+            const parentNode = nodes.find(p => p.id === n.parentId);
+            bounds.attributes = {
+              x: parentNode.position.x + n.position.x,
+              y: parentNode.position.y + n.position.y,
+              ...n.style
+            }
+
+            styleElement.elements = [bounds];
+            styleElements.push(styleElement);
+          })
         }
+
+        edges.forEach(edge => {
+          const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
+
+          const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
+          BPMNEdge.attributes.bpmnElement = edge.id;
+
+          if (edge.source) {
+            edgeNodeElement.attributes.sourceRef = edge.source;
+            const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
+            const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
+            nodeElement.elements.push(sourceElement);
+
+            const node = nodes.find(n => n.id === edge.source);
+            const waypoint = createElement({ name: "di:waypoint" });
+            const handle = edge.sourceHandle;
+            const position = getPosition(handle, node);
+            const parentNode = nodes.find(p => p.id === n.id);
+            waypoint.attributes = {
+              x: position.x + parentNode.position.x,
+              y: position.y + parentNode.position.y,
+            };
+            BPMNEdge.elements.push(waypoint);
+          }
+
+          if (edge.target) {
+            edgeNodeElement.attributes.targetRef = edge.target;
+            const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
+            const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
+            nodeElement.elements.push(sourceElement);
+
+            const node = nodes.find(n => n.id === edge.target);
+            const waypoint = createElement({ name: "di:waypoint" });
+            const handle = edge.targetHandle;
+            const position = getPosition(handle, node);
+
+            // waypoint.attributes = position;
+            const parentNode = nodes.find(p => p.id === n.id);
+            waypoint.attributes = {
+              x: position.x + parentNode.position.x,
+              y: position.y + parentNode.position.y,
+            };
+            BPMNEdge.elements.push(waypoint);
+          }
+
+          BPMNPlane.elements.push(BPMNEdge);
+
+          nodeElements.push(edgeNodeElement);
+
+          // BPMNDiagram.elements = [BPMNPlane];
+        })
+
+        process.elements.push(laneSet, ...nodeElements)
         processes.push(process);
+
 
 
         const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
@@ -215,22 +306,15 @@ const Output = () => {
         styleElement.elements = [bounds];
         styleElements.push(styleElement);
 
+        
       });
 
       collaboration.elements = participantElements;
 
-      const BPMNDiagram = createElement({
-        name: "bpmndi:BPMNDiagram",
-        id: `BPMNDiagram_1`
-      })
-
-      const BPMNPlane = createElement({
-        name: "bpmndi:BPMNPlane",
-        id: `BPMNPlane_1`
-      })
+      
 
       BPMNPlane.attributes.bpmnElement = collaborationId;
-      BPMNPlane.elements = styleElements;
+      BPMNPlane.elements.push(...styleElements);
       BPMNDiagram.elements = [BPMNPlane];
 
       definitions.elements = [collaboration, ...processes, BPMNDiagram];
@@ -263,8 +347,6 @@ const Output = () => {
         styleElement.elements = [bounds];
         styleElements.push(styleElement);
       })
-
-
 
       const BPMNDiagram = createElement({
         name: "bpmndi:BPMNDiagram",
@@ -330,7 +412,7 @@ const Output = () => {
       elements: [definitions]
     }
 
-    const content = convert.js2xml(result, { spaces: 4 });
+    const content = convert.js2xml(result, { spaces: 2 });
     console.log(content)
     download(content);
   }
