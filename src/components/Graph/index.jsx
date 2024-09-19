@@ -41,12 +41,12 @@ const Graph = () => {
     DrawerParams.showModal(value);
   };
 
-  useEffect(() => {
-    if (reactFlowInstance) {
-      reactFlowInstance.setNodes(initialNodes)
-      reactFlowInstance.setEdges(initialEdges)
-    }
-  }, [reactFlowInstance]);
+  // useEffect(() => {
+  //   if (reactFlowInstance) {
+  //     reactFlowInstance.setNodes(initialNodes)
+  //     reactFlowInstance.setEdges(initialEdges)
+  //   }
+  // }, [reactFlowInstance]);
 
   const onConnect = useCallback(
     (params) => {
@@ -145,7 +145,6 @@ const Graph = () => {
         newNodeRef.current = participant;
 
         const participantLaneSet = createParticipantLaneSet({ position });
-
         reactFlowInstance.addNodes([participant, participantLaneSet]);
       } else if (type === ParticipantVertical) {
         const participant = createParticipant({ position, isHorizontal: false });
@@ -296,13 +295,6 @@ const Graph = () => {
           <Button onClick={handleSubmit}>Submit</Button>
         </div>
       </Drawer>
-      <Button
-        onClick={() => {
-          console.log(reactFlowInstance.toObject());
-        }}
-      >
-        output
-      </Button>
     </div>
   );
 };

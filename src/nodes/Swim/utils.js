@@ -128,7 +128,7 @@ function createParticipantVertical({
 
 export function createParticipantLaneSet({
   position,
-  id,
+  id = getHash(),
   isHorizontal = true
 }) {
   const type = ParticipantLaneSet;
