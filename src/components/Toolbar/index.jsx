@@ -1,10 +1,11 @@
-import { Upload, Output } from "./components";
+import { Upload, Download } from "./components";
+import "./index.less";
 
 const Toolbar = () => {
   return (
     <div className="toolWrap">
       <Upload />
-      <Output />
+      <Download />
     </div>
   )
 }

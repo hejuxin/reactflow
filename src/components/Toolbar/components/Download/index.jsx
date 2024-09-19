@@ -3,8 +3,9 @@ import { getHash } from "@/utils/util";
 import { useReactFlow } from "@xyflow/react"
 import { Button } from "antd";
 import { memo } from "react";
-import convert from 'xml-js';
-import { createElement, createPlaceholderElement, download, getEdgeElement } from './utils';
+import convert from "xml-js";
+import { createElement, createPlaceholderElement, download, getEdgeElement } from "./utils";
+import img from "@/assets/toolbar/download.svg";
 
 const declaration = {
   attributes: {
@@ -27,10 +28,10 @@ const definitions = {
   elements: []
 };
 
-const Output = () => {
+const Download = () => {
   const reactflow = useReactFlow();
-  const handleOutput = () => {
 
+  const getResult = () => {
     const { nodes, edges } = reactflow.toObject()
 
     const participantNodes = nodes.filter(n => n.type === ParticipantHorizontal || n.type === ParticipantVertical);
@@ -266,13 +267,20 @@ const Output = () => {
       elements: [definitions]
     }
 
+    return result;
+  }
+
+  const handleDownload = () => {
+    const result = getResult();
+
     const content = convert.js2xml(result, { spaces: 2 });
-    console.log(content)
     download(content);
   }
   return (
-    <Button onClick={handleOutput}>output</Button>
+    <div onClick={handleDownload}>
+      <img src={img} alt="" title="下载BPMN文件" />
+    </div>
   )
 }
 
-export default memo(Output)
+export default memo(Download)

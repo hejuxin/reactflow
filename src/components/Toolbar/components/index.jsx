@@ -1,7 +1,7 @@
 import Upload from "./Upload";
-import Output from "./Output";
+import Download from "./Download";
 
 export {
   Upload,
-  Output
+  Download
 }
