@@ -1,13 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Graph, Slider, Toolbar } from './components';
+import { Graph } from './features';
 import './App.css';
+import { ReactFlowProvider } from '@xyflow/react';
 
 export default function App() {
   return (
     <div className='container'>
       {/* <Toolbar />
       <Slider /> */}
-      <Graph />
+      <ReactFlowProvider>
+        <Graph />
+      </ReactFlowProvider>
     </div>
   );
 }

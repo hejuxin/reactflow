@@ -1,9 +1,5 @@
-import Toolbar from "./Toolbar";
-import Slider from "./Slider";
-import Graph from "./Graph";
+import Handles from "./Handles";
 
 export {
-  Toolbar,
-  Slider,
-  Graph
+  Handles
 }

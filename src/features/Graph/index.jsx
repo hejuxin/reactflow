@@ -17,11 +17,12 @@ import {
   Controls,
   ReactFlow,
   ReactFlowProvider,
-  Panel
+  Panel,
+  useReactFlow
 } from "@xyflow/react";
 import { nodes as initialNodes, edges as initialEdges } from "@/mock";
 import "@xyflow/react/dist/style.css";
-import { Button, Drawer, Form, Input } from "antd";
+import { Breadcrumb, Button, Drawer, Form, Input } from "antd";
 import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams } from "@/utils/hooks";
@@ -34,7 +35,7 @@ const Graph = () => {
   const [form] = Form.useForm();
 
   const graphWrapper = useRef();
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const reactflow = useReactFlow();
   const newNodeRef = useRef();
 
   const showDrawer = (value) => {
@@ -42,30 +43,30 @@ const Graph = () => {
   };
 
   // useEffect(() => {
-  //   if (reactFlowInstance) {
-  //     reactFlowInstance.setNodes(initialNodes)
-  //     reactFlowInstance.setEdges(initialEdges)
+  //   if (reactflow) {
+  //     reactflow.setNodes(initialNodes)
+  //     reactflow.setEdges(initialEdges)
   //   }
-  // }, [reactFlowInstance]);
+  // }, [reactflow]);
 
   const onConnect = useCallback(
     (params) => {
       console.log("onConnect", params);
-      reactFlowInstance?.setEdges((eds) => addEdge(params, eds));
+      reactflow?.setEdges((eds) => addEdge(params, eds));
     },
-    [reactFlowInstance]
+    [reactflow]
   );
 
   const onNodesDelete = useCallback(
     (deleted) => {
       console.log('onNodesDelete', deleted);
 
-      if (!reactFlowInstance) return;
-      const nodes = reactFlowInstance.getNodes();
+      if (!reactflow) return;
+      const nodes = reactflow.getNodes();
       console.log(nodes, 'nodes');
 
-      const edges = reactFlowInstance.getEdges();
-      reactFlowInstance.setEdges(
+      const edges = reactflow.getEdges();
+      reactflow.setEdges(
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodes, edges);
           const outgoers = getOutgoers(node, nodes, edges);
@@ -93,17 +94,17 @@ const Graph = () => {
       if (deleted.length === 1 && deleted[0].type === ParticipantLane) {
         deleteLane({
           id: deleted[0].id,
-          reactflow: reactFlowInstance
+          reactflow: reactflow
         })
       }
     },
-    [reactFlowInstance]
+    [reactflow]
   );
 
   const handleDel = (value) => {
     const { id } = value;
 
-    reactFlowInstance.deleteElements({
+    reactflow.deleteElements({
       nodes: [{ id }]
     })
   };
@@ -112,7 +113,7 @@ const Graph = () => {
     const value = form.getFieldsValue();
     const { id } = DrawerParams.params;
 
-    reactFlowInstance.updateNodeData(id, { label: value.title })
+    reactflow.updateNodeData(id, { label: value.title })
     DrawerParams.hideModal();
   };
 
@@ -135,7 +136,7 @@ const Graph = () => {
 
       // // 使用 screenToFlowPosition 将像素坐标转换为内部 ReactFlow 坐标系
       // todo 拖拽加入坐标不准问题
-      const position = reactFlowInstance.screenToFlowPosition({
+      const position = reactflow.screenToFlowPosition({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
@@ -145,11 +146,11 @@ const Graph = () => {
         newNodeRef.current = participant;
 
         const participantLaneSet = createParticipantLaneSet({ position });
-        reactFlowInstance.addNodes([participant, participantLaneSet]);
+        reactflow.addNodes([participant, participantLaneSet]);
       } else if (type === ParticipantVertical) {
         const participant = createParticipant({ position, isHorizontal: false });
 
-        reactFlowInstance.addNodes(participant);
+        reactflow.addNodes(participant);
         newNodeRef.current = participant;
       } else {
         const id = getHash()
@@ -158,25 +159,21 @@ const Graph = () => {
           type,
           position,
           // 传入节点 data
+          style: {},
           data: { label: `${type} node` },
           zIndex: 10
         };
 
-        reactFlowInstance.addNodes(newNode)
+        reactflow.addNodes(newNode)
         newNodeRef.current = newNode;
       }
       // newNodeRef.current = newNode;
-      // reactFlowInstance?.addNodes(newNode);
-    }, [reactFlowInstance])
+      // reactflow?.addNodes(newNode);
+    }, [reactflow])
 
   const onDragOver = (event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-  };
-
-  const onInit = (instance) => {
-    console.log("onInit");
-    setReactFlowInstance(instance);
   };
 
   const handleNodesChange = (...p) => {
@@ -188,7 +185,7 @@ const Graph = () => {
       if (newNodeRef.current && info.id === newNodeRef.current.id) {
         const newNode = newNodeRef.current;
         newNodeRef.current = null;
-        const intersectingNodes = reactFlowInstance?.getIntersectingNodes({ id: newNode.id }, false);
+        const intersectingNodes = reactflow?.getIntersectingNodes({ id: newNode.id }, false);
         console.log(newNode.id, intersectingNodes, 'intersectingNodes')
 
         if (intersectingNodes.length) {
@@ -196,7 +193,7 @@ const Graph = () => {
           console.log(intersectingNodes, 'intersectingNodes');
           const intersectingNode = intersectingNodes[0];
 
-          reactFlowInstance?.updateNode(newNode.id, (node) => {
+          reactflow?.updateNode(newNode.id, (node) => {
             node.parentId = intersectingNode.id;
             node.extent = 'parent';
             const position = node.position;
@@ -223,7 +220,7 @@ const Graph = () => {
       //   const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
 
       //   laneNodes.forEach(node => {
-      //     reactFlowInstance?.updateNode(node.id, (node) => {
+      //     reactflow?.updateNode(node.id, (node) => {
       //       node.width = width - titleWidth;
       //       node.position.x = titleWidth
       //       return { ...node }
@@ -234,7 +231,7 @@ const Graph = () => {
 
     // if (info.type === 'add') {
     //   const id = info.id;
-    //   const intersectingNodes = reactFlowInstance?.getIntersectingNodes(info.item, false);
+    //   const intersectingNodes = reactflow?.getIntersectingNodes(info.item, false);
     //   console.log(intersectingNodes, 'handleNodesChange')
 
     //   // if (intersectingNodes.length) {
@@ -254,36 +251,32 @@ const Graph = () => {
       <FlowContext.Provider
         value={{
           handleDel,
-          handleEdit: showDrawer,
+          handleEdit: showDrawer
         }}
       >
-        <ReactFlowProvider>
-          <ReactFlow
-            // nodes={nodes}
-            defaultNodes={[]}
-            defaultEdges={[]}
-            fitView
-            onNodesChange={handleNodesChange}
-            onNodesDelete={onNodesDelete}
-            // onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            onInit={onInit}
-            minZoom={0.1}
-            maxZoom={1}
-          >
-            {/* <Controls position="top-right" orientation="horizontal"></Controls>
+        <ReactFlow
+          // nodes={nodes}
+          defaultNodes={[]}
+          defaultEdges={[]}
+          fitView
+          onNodesChange={handleNodesChange}
+          onNodesDelete={onNodesDelete}
+          // onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          minZoom={0.1}
+          maxZoom={1}
+        >
+          {/* <Controls position="top-right" orientation="horizontal"></Controls>
             <MiniMap /> */}
-
-            <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
-              <Toolbar />
-              <Slider />
-            </Panel>
-            <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
-          </ReactFlow>
-        </ReactFlowProvider>
+          <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
+            <Toolbar />
+            <Slider />
+          </Panel>
+          <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
+        </ReactFlow>
       </FlowContext.Provider>
       <Drawer title="Basic Drawer" {...DrawerParams.modalProps}>
         <Form form={form}>

@@ -1,7 +1,7 @@
 import ToolbarNode from "./ToolbarNode";
 import SelectToolbarNode from "./SelectToolbarNode";
 import GroupNode from "./GroupNode";
-import { ParticipantHorizontalNode, ParticipantVerticalNode, ParticipantLaneNode, ParticipantLaneSetNode } from './Swim'
+import { ParticipantHorizontalNode, ParticipantVerticalNode, ParticipantLaneNode, ParticipantLaneSetNode } from "./Swim"
 import Parallel from "./GateWay/Parallel";
 import Exclusive from "./GateWay/Exclusive";
 import Inclusive from "./GateWay/Inclusive";
@@ -11,65 +11,65 @@ import { ParticipantLane, ParticipantHorizontal, ParticipantVertical, Participan
 
 const nodeTypesArr = [
   {
-    name: 'Toolbar Node',
-    type: 'tools',
+    name: "Toolbar Node",
+    type: "tools",
     component: ToolbarNode
   },
   {
-    name: 'SelectToolbarNode Node',
-    type: 'selecttools',
+    name: "SelectToolbarNode Node",
+    type: "selecttools",
     component: SelectToolbarNode
   },
   {
-    name: 'Group Node',
-    type: 'group',
+    name: "Group Node",
+    type: "group",
     component: GroupNode
   },
   {
-    name: '水平泳道',
+    name: "水平泳道",
     type: ParticipantHorizontal,
     component: ParticipantHorizontalNode
   },
   {
-    name: '垂直泳道',
+    name: "垂直泳道",
     type: ParticipantVertical,
     component: ParticipantVerticalNode
   },
   {
-    name: '泳道set',
+    name: "泳道set",
     type: ParticipantLaneSet,
     component: ParticipantLaneSetNode,
     show: false
   },
   {
-    name: '子泳道',
+    name: "子泳道",
     type: ParticipantLane,
     component: ParticipantLaneNode,
     show: false
   },
   {
     name: "并行网关",
-    type: 'parallel-gateway',
+    type: "parallel-gateway",
     component: Parallel
   },
   {
     name: "排他网关",
-    type: 'exclusive-gateway',
+    type: "exclusive-gateway",
     component: Exclusive
   },
   {
     name: "相容网关",
-    type: 'inclusive-gateway',
+    type: "inclusive-gateway",
     component: Inclusive
   },
   {
     name: "开始事件",
-    type: 'start-event',
+    type: "start-event",
     component: Start
   },
   {
     name: "结束事件",
-    type: 'end-event',
+    type: "end-event",
     component: End
   }
 ]

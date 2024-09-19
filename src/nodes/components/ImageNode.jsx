@@ -26,26 +26,23 @@ const ImageNode = (props) => {
           minWidth={56}
           minHeight={56}
         />
-        <GroupNode>
-          <div>
-            <img src={nodeUrl[nodeType]} alt="" />
-          </div>
-          <div
-            style={{
-              //   position: 'absolute',
-              color: "#555555",
-              bottom: -15,
-              fontSize: 8,
-            }}
-          >
-            {isEdit ? (
-              <Input defaultValue={data.label} className="nodrag" />
-            ) : (
-              data?.label
-            )}
-          </div>
-        </GroupNode>
-        |
+        <div>
+          <img src={nodeUrl[nodeType]} alt="" />
+        </div>
+        <div
+          style={{
+            //   position: 'absolute',
+            color: "#555555",
+            bottom: -15,
+            fontSize: 8,
+          }}
+        >
+          {isEdit ? (
+            <Input defaultValue={data.label} className="nodrag" />
+          ) : (
+            data?.label
+          )}
+        </div>
       </div>
     </>
   );

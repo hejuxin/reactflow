@@ -1,7 +1,6 @@
 import { getLaneNodes, ParticipantHorizontal, ParticipantLane, ParticipantVertical } from "@/nodes/Swim/utils";
 import { getHash } from "@/utils/util";
 import { useReactFlow } from "@xyflow/react"
-import { Button } from "antd";
 import { memo } from "react";
 import convert from "xml-js";
 import { createElement, createPlaceholderElement, download, getEdgeElement } from "./utils";
@@ -274,6 +273,7 @@ const Download = () => {
     const result = getResult();
 
     const content = convert.js2xml(result, { spaces: 2 });
+    console.log(content, "content")
     download(content);
   }
   return (
