@@ -8,6 +8,7 @@ import Inclusive from "./GateWay/Inclusive";
 import Start from "./Events/StartEvent";
 import End from "./Events/EndEvent";
 import { ParticipantLane, ParticipantHorizontal, ParticipantVertical, ParticipantLaneSet } from "./Swim/utils";
+import SubProcess from "./SubProcess";
 
 const nodeTypesArr = [
   {
@@ -71,6 +72,11 @@ const nodeTypesArr = [
     name: "结束事件",
     type: "end-event",
     component: End
+  },
+  {
+    name: "子流程",
+    type: "subProcess",
+    component: SubProcess
   }
 ]
 

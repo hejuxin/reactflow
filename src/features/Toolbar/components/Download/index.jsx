@@ -3,8 +3,9 @@ import { getHash } from "@/utils/util";
 import { useReactFlow } from "@xyflow/react"
 import { memo } from "react";
 import convert from "xml-js";
-import { createElement, createPlaceholderElement, download, getEdgeElement } from "./utils";
+import { createBPMNShapeAndBounds, createElement, createNodeElement, createPlaceholderElement, download, getEdgeElement, setAttr } from "./utils";
 import img from "@/assets/toolbar/download.svg";
+import { graphDataMap, graphId } from "@/store";
 
 const declaration = {
   attributes: {
@@ -27,11 +28,65 @@ const definitions = {
   elements: []
 };
 
+const BPMNDiagram = createElement({
+  name: "bpmndi:BPMNDiagram",
+  id: `BPMNDiagram_1`
+})
+
+const BPMNPlane = createElement({
+  name: "bpmndi:BPMNPlane",
+  id: `BPMNPlane_1`
+})
+
 const Download = () => {
   const reactflow = useReactFlow();
 
+  function add({ nodes, edges, process, parentNode = {} }) {
+    const styleElements = [];
+    const nodeElementMap = new Map([]);
+
+    nodes.forEach(n => {
+      const id = n.id;
+      const nodeElement = createNodeElement(n);
+
+      if (n.type === "subProcess") {
+        const subProcessNodeId = id;
+        const data = graphDataMap.get(subProcessNodeId);
+        add({ nodes: data.nodes, edges: data.edges, process: nodeElement });
+      }
+      nodeElementMap.set(id, nodeElement);
+
+      const BPMNShapeElement = createBPMNShapeAndBounds({
+        node: n,
+      });
+      styleElements.push(BPMNShapeElement);
+    })
+
+    BPMNPlane.elements.push(...styleElements);
+
+    const BPMNEdges = getEdgeElement({
+      edges,
+      nodes,
+      parentId: parentNode.id,
+      map: nodeElementMap
+    })
+
+    BPMNPlane.elements.push(...BPMNEdges);
+    const elements = new Array(...nodeElementMap.values());
+    process.elements = elements;
+  }
+
   const getResult = () => {
-    const { nodes, edges } = reactflow.toObject()
+    const { nodes, edges } = reactflow.toObject();
+    // console.log(nodes, "nodes")
+
+    // const subProcessNodes = nodes.filter(n => n.type === "subProcess");
+    // console.log(subProcessNodes, "subProcessNodes");
+
+    // if (subProcessNodes.length) {
+    //   const { nodes = [], edges = [] } = graphDataMap.get(subProcessNodes[0].id);
+    //   console.log(nodes, edges, "subProcess")
+    // }
 
     const participantNodes = nodes.filter(n => n.type === ParticipantHorizontal || n.type === ParticipantVertical);
     if (participantNodes.length) {
@@ -45,54 +100,33 @@ const Download = () => {
       const participantElements = [];
       const styleElements = [];
 
-      const BPMNDiagram = createElement({
-        name: "bpmndi:BPMNDiagram",
-        id: `BPMNDiagram_1`
-      })
-
-      const BPMNPlane = createElement({
-        name: "bpmndi:BPMNPlane",
-        id: `BPMNPlane_1`
-      })
-
       participantNodes.forEach(n => {
         const id = n.id;
-        const element = createElement({ name: "participant", id });
-        const attributes = element.attributes;
-        attributes.name = n.title;
         const processId = `Process_${getHash()}`;
-        attributes.processRef = processId;
-        element.attributes = attributes;
-        participantElements.push(element);
+        const nodeElement = createNodeElement(n, "participant", { processRef: processId });
+        participantElements.push(nodeElement);
 
         const laneNodes = getLaneNodes({ nodes, parentId: id });
 
         const process = createElement({ name: "process", id: processId });
 
-        const nodeElements = [];
+
+        const nodeElementMap = new Map([]);
         const laneSet = createElement({ name: "laneSet", id: `LaneSet_${getHash()}` });
         if (laneNodes.length) {
-          const laneElements = [];
+          const laneElementMap = new Map([]);
           laneNodes.forEach(l => {
             const id = l.id;
             const laneElement = createElement({ name: "lane", id });
-            laneElements.push(laneElement);
+            laneElementMap.set(id, laneElement);
 
-            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
-            const styleAttr = styleElement.attributes;
-            styleAttr.bpmnElement = id;
-            styleAttr.isHorizontal = n.type === ParticipantHorizontal;
-            styleElement.attributes = styleAttr;
+            const BPMNShapeElement = createBPMNShapeAndBounds({
+              node: l,
+              attr: { isHorizontal: n.type === ParticipantHorizontal },
+              parentNode: n
+            });
 
-            const bounds = createElement({ name: "omgdc:Bounds" });
-            bounds.attributes = {
-              x: l.position.x + n.position.x,
-              y: l.position.y + n.position.y,
-              ...l.style
-            }
-
-            styleElement.elements = [bounds];
-            styleElements.push(styleElement);
+            styleElements.push(BPMNShapeElement);
           })
 
           const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
@@ -101,166 +135,73 @@ const Download = () => {
 
             const intersectingLaneNodes = intersectingNodes.filter(n => n.type === ParticipantLane);
             const intersectingLaneNode = intersectingLaneNodes[0];
-            const laneNode = laneElements.find(l => l.attributes.id === intersectingLaneNode.id);
+            const laneNode = laneElementMap.get(intersectingLaneNode.id);
 
             const id = n.id;
-            const nodeElement = createElement({ name: n.type, id });
-            const nodeAttr = nodeElement.attributes;
-            nodeAttr.name = n.title;
-            nodeElement.attributes = nodeAttr;
-            nodeElements.push(nodeElement);
+            const nodeElement = createNodeElement(n);
+            nodeElementMap.set(id, nodeElement);
 
             const flowNodeRef = createPlaceholderElement({ name: "flowNodeRef", text: id });
 
             laneNode.elements.push(flowNodeRef);
 
-            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
-            const styleAttr = styleElement.attributes;
-            styleAttr.bpmnElement = id;
-            styleElement.attributes = styleAttr;
-
-            const bounds = createElement({ name: "omgdc:Bounds" });
-
             const parentNode = nodes.find(p => p.id === n.parentId);
-            bounds.attributes = {
-              x: parentNode.position.x + n.position.x,
-              y: parentNode.position.y + n.position.y,
-              ...n.style
-            }
-
-            styleElement.elements = [bounds];
-            styleElements.push(styleElement);
+            const BPMNShapeElement = createBPMNShapeAndBounds({ node: n, parentNode })
+            styleElements.push(BPMNShapeElement);
           })
 
+          const laneElements = new Array(...laneElementMap.values());
           laneSet.elements = laneElements;
 
           // process.elements.push(nodeElements)
+
+          const BPMNEdges = getEdgeElement({
+            edges,
+            nodes,
+            parentId: n.id,
+            map: nodeElementMap
+          })
+
+          BPMNPlane.elements.push(...BPMNEdges);
+
+          process.elements.push(laneSet, ...new Array(...nodeElementMap.values()))
         } else {
           const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
 
-          normalNodes.forEach(n => {
-            const id = n.id;
-            const nodeElement = createElement({ name: n.type, id });
-            const nodeAttr = nodeElement.attributes;
-            nodeAttr.name = n.title;
-            nodeElement.attributes = nodeAttr;
-            nodeElements.push(nodeElement);
-
-            const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
-            const styleAttr = styleElement.attributes;
-            styleAttr.bpmnElement = id;
-            styleElement.attributes = styleAttr;
-
-            const bounds = createElement({ name: "omgdc:Bounds" });
-
-            const parentNode = nodes.find(p => p.id === n.parentId);
-            bounds.attributes = {
-              x: parentNode.position.x + n.position.x,
-              y: parentNode.position.y + n.position.y,
-              ...n.style
-            }
-
-            styleElement.elements = [bounds];
-            styleElements.push(styleElement);
-          })
+          add({
+            nodes: normalNodes,
+            edges,
+            process,
+            parentNode: n
+          });
         }
 
-        getEdgeElement({
-          nodes,
-          nodeElements,
-          edges,
-          parentId: n.id,
-          BPMNPlane
-        })
 
-        process.elements.push(laneSet, ...nodeElements)
         processes.push(process);
-
-
-
-        const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
-        const styleAttr = styleElement.attributes;
-        styleAttr.bpmnElement = id;
-        styleAttr.isHorizontal = n.type === ParticipantHorizontal;
-        styleElement.attributes = styleAttr;
-
-        const bounds = createElement({ name: "omgdc:Bounds" });
-        bounds.attributes = {
-          ...n.position,
-          width: n.width ?? n.measured.width ?? n.style.width,
-          height: n.height ?? n.measured.height ?? n.style.height
-        }
-
-        styleElement.elements = [bounds];
-        styleElements.push(styleElement);
-
-
+        const BPMNShapeElement = createBPMNShapeAndBounds({
+          node: n,
+          attr: { isHorizontal: n.type === ParticipantHorizontal }
+        });
+        styleElements.push(BPMNShapeElement);
       });
 
       collaboration.elements = participantElements;
 
-
-
-      BPMNPlane.attributes.bpmnElement = collaborationId;
+      setAttr({ o: BPMNPlane, attrs: { bpmnElement: collaborationId } });
       BPMNPlane.elements.push(...styleElements);
-      BPMNDiagram.elements = [BPMNPlane];
 
-      definitions.elements = [collaboration, ...processes, BPMNDiagram];
+      definitions.elements = [collaboration, ...processes];
     } else {
       const processId = `Process_1`;
-      const defaultProcess = createElement({ name: "process", id: processId });
-      const nodeElements = [];
-      const styleElements = [];
+      const process = createElement({ name: "process", id: processId });
 
-      nodes.forEach(n => {
-        const id = n.id;
-        const nodeElement = createElement({ name: n.type, id });
-        const nodeAttr = nodeElement.attributes;
-        nodeAttr.name = n.title;
-        nodeElement.attributes = nodeAttr;
-        nodeElements.push(nodeElement);
-
-
-        const styleElement = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
-        const styleAttr = styleElement.attributes;
-        styleAttr.bpmnElement = id;
-        styleElement.attributes = styleAttr;
-
-        const bounds = createElement({ name: "omgdc:Bounds" });
-        bounds.attributes = {
-          ...n.position,
-          ...n.style
-        }
-
-        styleElement.elements = [bounds];
-        styleElements.push(styleElement);
-      })
-
-      const BPMNDiagram = createElement({
-        name: "bpmndi:BPMNDiagram",
-        id: `BPMNDiagram_1`
-      })
-
-      const BPMNPlane = createElement({
-        name: "bpmndi:BPMNPlane",
-        id: `BPMNPlane_1`
-      })
-
-      BPMNPlane.attributes.bpmnElement = processId;
-      BPMNPlane.elements = styleElements;
-
-      getEdgeElement({
-        edges,
-        nodes,
-        nodeElements,
-        BPMNPlane
-      })
-
-      defaultProcess.elements = nodeElements;
-      BPMNDiagram.elements = [BPMNPlane];
-      definitions.elements = [defaultProcess, BPMNDiagram];
+      setAttr({ o: BPMNPlane, attrs: { bpmnElement: processId } });
+      add({ nodes, edges, process: process, parentId: processId });
+      definitions.elements = [process];
     }
 
+    BPMNDiagram.elements = [BPMNPlane];
+    definitions.elements.push(BPMNDiagram)
     const result = {
       declaration,
       elements: [definitions]

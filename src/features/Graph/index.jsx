@@ -25,10 +25,11 @@ import "@xyflow/react/dist/style.css";
 import { Breadcrumb, Button, Drawer, Form, Input } from "antd";
 import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
-import { useDrawerParams } from "@/utils/hooks";
+import { useDrawerParams, useGraph } from "@/utils/hooks";
 import { getHash } from "@/utils/util";
 import { createParticipant, deleteLane, ParticipantLane, ParticipantHorizontal, ParticipantVertical, createParticipantLaneSet } from "@/nodes/Swim/utils";
 import { Slider, Toolbar } from "..";
+import { maingraphId } from "@/store";
 
 const Graph = () => {
   const DrawerParams = useDrawerParams();
@@ -37,6 +38,8 @@ const Graph = () => {
   const graphWrapper = useRef();
   const reactflow = useReactFlow();
   const newNodeRef = useRef();
+
+  const { graphId, handleGraphIdChange } = useGraph();
 
   const showDrawer = (value) => {
     DrawerParams.showModal(value);
@@ -251,7 +254,8 @@ const Graph = () => {
       <FlowContext.Provider
         value={{
           handleDel,
-          handleEdit: showDrawer
+          handleEdit: showDrawer,
+          onSubProcessExpand: handleGraphIdChange
         }}
       >
         <ReactFlow
@@ -271,6 +275,22 @@ const Graph = () => {
         >
           {/* <Controls position="top-right" orientation="horizontal"></Controls>
             <MiniMap /> */}
+          <Panel position="top-center">
+            {graphId !== maingraphId ? (
+              <Breadcrumb
+                separator=">"
+                items={[
+                  {
+                    title: '主流程',
+                    onClick: () => handleGraphIdChange(maingraphId)
+                  },
+                  {
+                    title: graphId
+                  },
+                ]}
+              />
+            ) : <></>}
+          </Panel>
           <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
             <Toolbar />
             <Slider />

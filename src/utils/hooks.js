@@ -1,4 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { graphDataMap, maingraphId, setId } from "@/store";
+import { useReactFlow } from "@xyflow/react";
+import { useCallback, useRef, useState, useEffect } from "react";
 
 /**
  * 自定义drawer hook
@@ -29,4 +31,32 @@ export function useDrawerParams() {
       destroyOnClose: true,
     },
   };
+}
+
+export function useGraph() {
+  const reactflow = useReactFlow();
+  const [graphId, setGraphId] = useState(maingraphId);
+
+  const handleGraphIdChange = (id) => {
+    const data = reactflow.toObject();
+    graphDataMap.set(graphId, data);
+    setGraphId(id);
+  };
+
+  useEffect(() => {
+    setId(graphId);
+    if (graphDataMap.has(graphId)) {
+      const { nodes, edges } = graphDataMap.get(graphId);
+      reactflow.setNodes(nodes);
+      reactflow.setEdges(edges);
+    } else {
+      reactflow?.setNodes([]);
+      reactflow?.setEdges([]);
+    }
+  }, [graphId]);
+
+  return {
+    handleGraphIdChange,
+    graphId
+  }
 }

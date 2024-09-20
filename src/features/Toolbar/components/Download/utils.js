@@ -1,7 +1,8 @@
 import { Position } from "@xyflow/react";
 import { getHash } from "@/utils/util";
+import { graphDataMap, maingraphId } from "@/store";
 
-export const download = (content) => {
+export function download(content) {
   const fileName = "diagram.bpmn";
   const file = new File([content], fileName, {
     type: "text/plain",
@@ -38,11 +39,11 @@ function getPosition(handle, node) {
   return position
 }
 
-export const createElement = ({
+export function createElement({
   type = "element",
   name,
   id = getHash()
-}) => {
+}) {
   return {
     type,
     name,
@@ -72,22 +73,24 @@ export function createPlaceholderElement({
 
 export function getEdgeElement({
   edges,
-  nodeElements,
   nodes,
   parentId,
-  BPMNPlane
+  map
 }) {
+  const BPMNEdgeMap = new Map([]);
   edges.forEach(edge => {
-    const edgeNodeElement = createElement({ name: "sequenceFlow", id: edge.id });
+    const edgeNodeElementId = edge.id;
+    const edgeNodeElement = createElement({ name: "sequenceFlow", id: edgeNodeElementId });
 
-    const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edge.id}_di` });
-    BPMNEdge.attributes.bpmnElement = edge.id;
+    const BPMNEdgeId = `${edgeNodeElementId}_di`
+    const BPMNEdge = createElement({ name: "bpmndi:BPMNEdge", id: `${edgeNodeElementId}_di` });
+    BPMNEdge.attributes.bpmnElement = edgeNodeElementId;
 
     if (edge.source) {
       edgeNodeElement.attributes.sourceRef = edge.source;
-      const nodeElement = nodeElements.find(element => element.attributes.id === edge.source);
-      const sourceElement = createPlaceholderElement({ name: "outgoing", text: edge.id });
-      nodeElement.elements.push(sourceElement);
+      const sourceElement = map.get(edge.source);
+      const placeholderElement = createPlaceholderElement({ name: "outgoing", text: edgeNodeElementId });
+      sourceElement.elements.push(placeholderElement);
 
       const node = nodes.find(n => n.id === edge.source);
       const waypoint = createElement({ name: "di:waypoint" });
@@ -115,9 +118,9 @@ export function getEdgeElement({
 
     if (edge.target) {
       edgeNodeElement.attributes.targetRef = edge.target;
-      const nodeElement = nodeElements.find(element => element.attributes.id === edge.target);
-      const sourceElement = createPlaceholderElement({ name: "incoming", text: edge.id });
-      nodeElement.elements.push(sourceElement);
+      const targetElement = map.get(edge.source);
+      const placeholderElement = createPlaceholderElement({ name: "outgoing", text: edgeNodeElementId });
+      targetElement.elements.push(placeholderElement);
 
       const node = nodes.find(n => n.id === edge.target);
       const waypoint = createElement({ name: "di:waypoint" });
@@ -144,10 +147,67 @@ export function getEdgeElement({
       BPMNEdge.elements.push(waypoint);
     }
 
-    BPMNPlane.elements.push(BPMNEdge);
-
-    nodeElements.push(edgeNodeElement);
+    BPMNEdgeMap.set(BPMNEdgeId, BPMNEdge);
+    map.set(edgeNodeElementId, edgeNodeElement)
 
     // BPMNDiagram.elements = [BPMNPlane];
   })
+
+  const BPMNEdges = new Array(...BPMNEdgeMap.values());
+  return BPMNEdges;
+}
+
+export function setAttr({
+  o,
+  attrs = {}
+}) {
+  const attributes = o.attributes;
+  Object.keys(attrs).forEach(key => {
+    const value = attrs[key];
+    attributes[key] = value;
+  });
+
+  o.attributes = attributes;
+}
+
+export function createBPMNShape(id, attr = {}) {
+  const element = createElement({ name: "bpmndi:BPMNShape", id: `${id}_di` });
+  setAttr({ o: element, attrs: { ...attr, bpmnElement: id } });
+
+  return element;
+}
+
+function getSize(node, key) {
+  return node[key] ?? node.measured?.[key] ?? node.style?.[key]
+}
+
+
+export function createBPMNShapeAndBounds({ node, attr = {}, parentNode = {} }) {
+  const BPMNShape = createBPMNShape(node.id, attr);
+  const bounds = createElement({ name: "omgdc:Bounds" });
+  bounds.attributes = {
+    x: (parentNode.position?.x ?? 0) + node.position.x,
+    y: (parentNode.position?.y ?? 0) + node.position.y,
+    width: getSize(node, "width"),
+    height: getSize(node, "height"),
+  }
+
+  BPMNShape.elements = [bounds];
+
+  return BPMNShape;
+}
+
+export function createNodeElement(node, type = null, attr = {}) {
+  const element = createElement({ name: type ?? node.type, id: node.id });
+  setAttr({ o: element, attrs: { ...attr, name: node.title } });
+
+  return element;
+}
+
+
+export function getParentNode(parentId) {
+  const nodes = graphDataMap.get(maingraphId);
+  const parentNode = nodes.find(n => n.id === parentId);
+
+  return parentNode;
 }
