@@ -1,6 +1,7 @@
 import { Position } from "@xyflow/react";
 import { getHash } from "@/utils/util";
 import { graphDataMap, maingraphId } from "@/store";
+import { graphNodeInBPMNMap } from "@/nodes";
 
 export function download(content) {
   const fileName = "diagram.bpmn";
@@ -197,8 +198,8 @@ export function createBPMNShapeAndBounds({ node, attr = {}, parentNode = {} }) {
   return BPMNShape;
 }
 
-export function createNodeElement(node, type = null, attr = {}) {
-  const element = createElement({ name: type ?? node.type, id: node.id });
+export function createNodeElement(node, attr = {}) {
+  const element = createElement({ name: graphNodeInBPMNMap.get(node.type), id: node.id });
   setAttr({ o: element, attrs: { ...attr, name: node.title } });
 
   return element;

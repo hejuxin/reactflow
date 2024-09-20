@@ -78,15 +78,7 @@ const Download = () => {
 
   const getResult = () => {
     const { nodes, edges } = reactflow.toObject();
-    // console.log(nodes, "nodes")
-
-    // const subProcessNodes = nodes.filter(n => n.type === "subProcess");
-    // console.log(subProcessNodes, "subProcessNodes");
-
-    // if (subProcessNodes.length) {
-    //   const { nodes = [], edges = [] } = graphDataMap.get(subProcessNodes[0].id);
-    //   console.log(nodes, edges, "subProcess")
-    // }
+    console.log(nodes, "nodes")
 
     const participantNodes = nodes.filter(n => n.type === ParticipantHorizontal || n.type === ParticipantVertical);
     if (participantNodes.length) {
@@ -139,10 +131,14 @@ const Download = () => {
 
             const id = n.id;
             const nodeElement = createNodeElement(n);
+            if (n.type === "subProcess") {
+              const subProcessNodeId = id;
+              const data = graphDataMap.get(subProcessNodeId);
+              add({ nodes: data.nodes, edges: data.edges, process: nodeElement });
+            }
             nodeElementMap.set(id, nodeElement);
 
             const flowNodeRef = createPlaceholderElement({ name: "flowNodeRef", text: id });
-
             laneNode.elements.push(flowNodeRef);
 
             const parentNode = nodes.find(p => p.id === n.parentId);
