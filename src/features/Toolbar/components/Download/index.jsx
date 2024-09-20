@@ -5,7 +5,7 @@ import { memo } from "react";
 import convert from "xml-js";
 import { createBPMNShapeAndBounds, createElement, createNodeElement, createPlaceholderElement, download, getEdgeElement, setAttr } from "./utils";
 import img from "@/assets/toolbar/download.svg";
-import { graphDataMap, maingraphId } from "@/store";
+import { graphDataMap, graphId, maingraphId } from "@/store";
 
 const declaration = {
   attributes: {
@@ -14,34 +14,12 @@ const declaration = {
   }
 };
 
-const definitions = {
-  type: "element",
-  name: "definitions",
-  attributes: {
-    "xmlns": "http://www.omg.org/spec/BPMN/20100524/MODEL",
-    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-    "xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
-    "xmlns:omgdc": "http://www.omg.org/spec/DD/20100524/DC",
-    "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
-    "targetNamespace": "http://flowable.org/bpmn"
-  },
-  elements: []
-};
-
-const BPMNDiagram = createElement({
-  name: "bpmndi:BPMNDiagram",
-  id: `BPMNDiagram_1`
-})
-
-const BPMNPlane = createElement({
-  name: "bpmndi:BPMNPlane",
-  id: `BPMNPlane_1`
-})
+const BPMNDiagramMap = new Map([]);
 
 const Download = () => {
   const reactflow = useReactFlow();
 
-  function add({ nodes, edges, process, parentNode = {} }) {
+  function add({ nodes, edges, process, processId, parentNode = {} }) {
     const styleElements = [];
     const nodeElementMap = new Map([]);
 
@@ -51,8 +29,8 @@ const Download = () => {
 
       if (n.type === "subProcess") {
         const subProcessNodeId = id;
-        const data = graphDataMap.get(subProcessNodeId);
-        add({ nodes: data.nodes, edges: data.edges, process: nodeElement });
+        const data = graphDataMap.get(subProcessNodeId) || {};
+        add({ nodes: data.nodes ?? [], edges: data.edges ?? [], process: nodeElement, processId: subProcessNodeId });
       }
       nodeElementMap.set(id, nodeElement);
 
@@ -61,6 +39,19 @@ const Download = () => {
       });
       styleElements.push(BPMNShapeElement);
     })
+
+    const BPMNDiagramId = `BPMNDiagram_${getHash()}`;
+    const BPMNDiagram = createElement({
+      name: "bpmndi:BPMNDiagram",
+      id: BPMNDiagramId
+    })
+
+    const BPMNPlane = createElement({
+      name: "bpmndi:BPMNPlane",
+      id: `BPMNPlane_${getHash()}`
+    })
+
+    setAttr({ o: BPMNPlane, attrs: { bpmnElement: processId } });
 
     BPMNPlane.elements.push(...styleElements);
 
@@ -74,10 +65,45 @@ const Download = () => {
     BPMNPlane.elements.push(...BPMNEdges);
     const elements = new Array(...nodeElementMap.values());
     process.elements = elements;
+
+    BPMNDiagram.elements = [BPMNPlane];
+    BPMNDiagramMap.set(BPMNDiagramId, BPMNDiagram);
+  }
+
+  function getData() {
+    let nodes = [];
+    let edges = [];
+    if (graphId === maingraphId) {
+      const maingraphData = reactflow.toObject();
+      nodes = maingraphData.nodes ?? [];
+      edges = maingraphData.edges ?? [];
+    } else {
+      const graphData = reactflow.toObject();
+      graphDataMap.set(graphId, graphData);
+      const maingraphData = graphDataMap.get(maingraphId) || {};
+      nodes = maingraphData.nodes ?? [];
+      edges = maingraphData.edges ?? [];
+    }
+
+    return { nodes, edges }
   }
 
   const getResult = () => {
-    const { nodes, edges } = graphDataMap.get(maingraphId);
+    const { nodes, edges } = getData();
+
+    const definitions = {
+      type: "element",
+      name: "definitions",
+      attributes: {
+        "xmlns": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+        "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        "xmlns:bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+        "xmlns:omgdc": "http://www.omg.org/spec/DD/20100524/DC",
+        "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+        "targetNamespace": "http://flowable.org/bpmn"
+      },
+      elements: []
+    };
 
     const participantNodes = nodes.filter(n => n.type === ParticipantHorizontal || n.type === ParticipantVertical);
     if (participantNodes.length) {
@@ -91,10 +117,21 @@ const Download = () => {
       const participantElements = [];
       const styleElements = [];
 
+      const BPMNDiagramId = `BPMNDiagram_1`
+      const BPMNDiagram = createElement({
+        name: "bpmndi:BPMNDiagram",
+        id: BPMNDiagramId
+      })
+      
+      const BPMNPlane = createElement({
+        name: "bpmndi:BPMNPlane",
+        id: `BPMNPlane_1`
+      })
+
       participantNodes.forEach(n => {
         const id = n.id;
         const processId = `Process_${getHash()}`;
-        const nodeElement = createNodeElement(n, "participant", { processRef: processId });
+        const nodeElement = createNodeElement(n, { processRef: processId });
         participantElements.push(nodeElement);
 
         const laneNodes = getLaneNodes({ nodes, parentId: id });
@@ -132,8 +169,8 @@ const Download = () => {
             const nodeElement = createNodeElement(n);
             if (n.type === "subProcess") {
               const subProcessNodeId = id;
-              const data = graphDataMap.get(subProcessNodeId);
-              add({ nodes: data.nodes, edges: data.edges, process: nodeElement });
+              const data = graphDataMap.get(subProcessNodeId) || {};
+              add({ nodes: data.nodes ?? [], edges: data.edges ?? [], process: nodeElement, processId: id });
             }
             nodeElementMap.set(id, nodeElement);
 
@@ -160,6 +197,11 @@ const Download = () => {
           BPMNPlane.elements.push(...BPMNEdges);
 
           process.elements.push(laneSet, ...new Array(...nodeElementMap.values()))
+
+          setAttr({ o: BPMNPlane, attrs: { bpmnElement: collaborationId } });
+          BPMNPlane.elements.push(...styleElements);
+          BPMNDiagram.elements = [BPMNPlane];
+          BPMNDiagramMap.set(BPMNDiagramId, BPMNDiagram)
         } else {
           const normalNodes = nodes.filter(n => n.parentId === id && (n.type !== ParticipantHorizontal && n.type !== ParticipantVertical && n.type !== ParticipantLane));
 
@@ -167,7 +209,8 @@ const Download = () => {
             nodes: normalNodes,
             edges,
             process,
-            parentNode: n
+            parentNode: n,
+            processId: collaborationId
           });
         }
 
@@ -182,21 +225,20 @@ const Download = () => {
 
       collaboration.elements = participantElements;
 
-      setAttr({ o: BPMNPlane, attrs: { bpmnElement: collaborationId } });
-      BPMNPlane.elements.push(...styleElements);
 
-      definitions.elements = [collaboration, ...processes];
+      definitions.elements = [collaboration, ...processes, ...[...BPMNDiagramMap.values()]];
+      // // BPMNDiagram.elements = [BPMNPlane];
+      // definitions.elements.push(BPMNDiagram)
     } else {
-      const processId = `Process_1`;
+      const id = 1;
+      const processId = `Process_${id}`;
       const process = createElement({ name: "process", id: processId });
-
-      setAttr({ o: BPMNPlane, attrs: { bpmnElement: processId } });
-      add({ nodes, edges, process: process, parentId: processId });
-      definitions.elements = [process];
+      
+      add({ nodes, edges, process: process, processId: processId });
+      definitions.elements = [process, ...[...BPMNDiagramMap.values()]];
     }
 
-    BPMNDiagram.elements = [BPMNPlane];
-    definitions.elements.push(BPMNDiagram)
+    
     const result = {
       declaration,
       elements: [definitions]
@@ -209,6 +251,7 @@ const Download = () => {
     const result = getResult();
 
     const content = convert.js2xml(result, { spaces: 2 });
+    BPMNDiagramMap.clear();
     console.log(content, "content")
     download(content);
   }

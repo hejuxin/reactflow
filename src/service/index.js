@@ -1,19 +1,18 @@
 import { Position } from "@xyflow/react";
 import { ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane, createParticipant } from "@/nodes/Swim/utils";
 import { BPMNNodeInGraphMap } from "@/nodes";
+import { graphDataMap, maingraphId } from "@/store";
 
 export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
   const definitions = data.elements;
   const elements = definitions[0].elements;
 
-  let nodes = [];
 
-  let edges = [];
 
   const map = new Map();
 
-  const formatToNode = (elements, parentId) => {
+  const formatToNode = (elements, parentId, nodes, edges) => {
     elements.forEach(element => {
       if (element.type === 'element') {
         // todo 先过滤掉flowNodeRef的
@@ -29,7 +28,7 @@ export const getElements = (dataSource) => {
         }
 
         if (element.name === 'collaboration') {
-          formatToNode(children, props.id);
+          formatToNode(children, props.id, nodes, edges);
           return;
         }
 
@@ -44,13 +43,13 @@ export const getElements = (dataSource) => {
 
         if (element.name === 'process') {
           const nodeId = map.get(props.id);
-          formatToNode(children, nodeId);
+          formatToNode(children, nodeId, nodes, edges);
           return;
 
         }
 
         if (element.name === 'laneSet') {
-          formatToNode(children, parentId);
+          formatToNode(children, parentId, nodes, edges);
           return;
         }
 
@@ -64,14 +63,14 @@ export const getElements = (dataSource) => {
 
         if (element.name === 'bpmndi:BPMNDiagram') {
           if (children.length) {
-            formatToNode(children);
+            formatToNode(children, null, nodes, edges);
           }
           return;
         }
 
         if (element.name === 'bpmndi:BPMNPlane') {
           if (children.length) {
-            formatToNode(children);
+            formatToNode(children, null, nodes, edges);
           }
           return;
         }
@@ -105,8 +104,19 @@ export const getElements = (dataSource) => {
           }
           // const index = nodes.findIndex(node => node.id === nodeId);
 
+          const index = nodes.findIndex(node => node.id === nodeId || node._id === nodeId);
+          const node = nodes[index];
+          console.log(nodes, node, nodeId, 'node BPMNShape')
           if (children.length) {
-            formatToNode(children, nodeId);
+            if (node.type === "subProcess") {
+              const data = graphDataMap.get(node.id) || {};
+              const subProcessNodes = data.nodes ?? [];
+              const subProcessEdges = data.edges ?? [];
+              formatToNode(children, null, subProcessNodes, subProcessEdges);
+              graphDataMap.set(node.id, { ...data, nodes: subProcessNodes, edges: subProcessEdges });
+            } else {
+              formatToNode(children, nodeId, nodes, edges);
+            }
           }
 
           return;
@@ -115,6 +125,8 @@ export const getElements = (dataSource) => {
         if (element.name === 'omgdc:Bounds') {
           const index = nodes.findIndex(node => node.id === parentId || node._id === parentId);
           const node = nodes[index];
+
+          console.log(nodes, node, 'node', parentId)
 
           const style = {
             width: Number(props.width),
@@ -279,16 +291,32 @@ export const getElements = (dataSource) => {
         nodes.push(node);
 
         if (children.length) {
-          formatToNode(children, props.id);
+          if (node.type === "subProcess") {
+            const data = graphDataMap.get(node.id) || {};
+            const subProcessNodes = data.nodes ?? [];
+            const subProcessEdges = data.edges ?? [];
+            formatToNode(children, null, subProcessNodes, subProcessEdges);
+            graphDataMap.set(node.id, { ...data, nodes: subProcessNodes, edges: subProcessEdges });
+          } else {
+            formatToNode(children, props.id, nodes, edges);
+          }
         }
       }
 
     })
   }
 
-  formatToNode(elements);
+  let nodes = [], edges = [];
+  let maingraphData = graphDataMap.get(maingraphId) || {}
+  formatToNode(elements, null, nodes, edges);
 
 
+  graphDataMap.set(maingraphId, { ...maingraphData, nodes, edges });
+
+  console.log(graphDataMap.get(maingraphId), 'ddd')
+
+
+  console.log(graphDataMap, 'graphDataMap')
   console.log(nodes, 'nodes');
   console.log(edges, 'edges')
   return {
