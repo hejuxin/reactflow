@@ -1,5 +1,6 @@
 import { Position } from "@xyflow/react";
 import { ParticipantLane, ParticipantVertical, ParticipantHorizontal, titleWidth, createLane, createParticipant } from "@/nodes/Swim/utils";
+import { BPMNNodeInGraphMap } from "@/nodes";
 
 export const getElements = (dataSource) => {
   const data = JSON.parse(dataSource);
@@ -250,7 +251,7 @@ export const getElements = (dataSource) => {
 
         const node = {
           id: props.id,
-          type: element.name,
+          type: BPMNNodeInGraphMap.get(element.name),
           position: {
             x: 0,
             y: 0

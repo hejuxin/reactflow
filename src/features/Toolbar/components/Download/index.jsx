@@ -5,7 +5,7 @@ import { memo } from "react";
 import convert from "xml-js";
 import { createBPMNShapeAndBounds, createElement, createNodeElement, createPlaceholderElement, download, getEdgeElement, setAttr } from "./utils";
 import img from "@/assets/toolbar/download.svg";
-import { graphDataMap, graphId } from "@/store";
+import { graphDataMap, maingraphId } from "@/store";
 
 const declaration = {
   attributes: {
@@ -77,8 +77,7 @@ const Download = () => {
   }
 
   const getResult = () => {
-    const { nodes, edges } = reactflow.toObject();
-    console.log(nodes, "nodes")
+    const { nodes, edges } = graphDataMap.get(maingraphId);
 
     const participantNodes = nodes.filter(n => n.type === ParticipantHorizontal || n.type === ParticipantVertical);
     if (participantNodes.length) {
