@@ -176,7 +176,9 @@ function deleteLane({ id, reactflow }) {
   const parentId = currentNode.parentId;
 
   const nodes = reactflow.getNodes();
-  const laneNodes = getLaneNodes({ nodes, parentId });
+  const isHorizontal = getIsHorizontal({ parentId, reactflow });
+  const sortKey = isHorizontal ? "y" : "x";
+  const laneNodes = getLaneNodes({ nodes, parentId }).sort((a, b) => a.position[sortKey] - b.position[sortKey]);
   const laneNodesLength = laneNodes.length;
 
   if (laneNodesLength === 1) return;
@@ -184,7 +186,6 @@ function deleteLane({ id, reactflow }) {
   const isFirstNode = id === laneNodes[0].id;
   const isLastNode = id === laneNodes[laneNodesLength - 1].id;
 
-  const isHorizontal = getIsHorizontal({ parentId, reactflow });
   const sizeKey = isHorizontal ? 'height' : 'width';
   const positionKey = isHorizontal ? 'y' : 'x';
   const currentNodeSize = currentNode[sizeKey] ?? currentNode.measured[sizeKey];
