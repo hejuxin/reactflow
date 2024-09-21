@@ -22,7 +22,7 @@ export const ParticipantHorizontalLaneSize = {
 }
 
 
-export  const ParticipantVerticalLaneSize = {
+export const ParticipantVerticalLaneSize = {
   defaultWidth: laneDefalutWidth,
   defaultHeight: laneDefalutHeight,
   minWidth: laneDefalutWidth / 2,
@@ -258,31 +258,26 @@ function handleAddLaneOnLaneNodeHorizontal({ direction, reactflow, id, parentId 
       positionY
     });
 
+    const newlaneNodeId = laneNode.id;
+
     newNodes.splice(currentNodeIndex, 0, laneNode);
-    reactflow.setNodes(newNodes);
-    // reactflow.addNodes(laneNode);
 
-    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
+    const boundariesY = positionY;
+    newNodes.forEach(node => {
+      if (node.id === parentId) {
+        node.width = node.width ?? node.measured.width;
+        node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
+        const y = node.position.y;
+        node.position.y = y - laneDefalutHeight;
+      }
 
-    needChangeNodes.forEach(node => {
-      reactflow.updateNode(node.id, node => {
+      if (node.parentId === parentId && node.id !== newlaneNodeId && node.position.y >= boundariesY) {
         const y = node.position.y;
         node.position.y = y + laneDefalutHeight;
-        return { ...node }
-      });
-    });
-
-
-
-    reactflow.updateNode(parentId, (node) => {
-      node.width = node.width ?? node.measured.width;
-      node.height = (node.height ?? node.measured.height) + laneDefalutHeight;
-      const y = node.position.y;
-      node.position.y = y - laneDefalutHeight;
+      }
     })
 
-    // onWrapPositionYChangeEffect({ reactflow, parentId })
-
+    reactflow.setNodes(newNodes);
 
   } else {
     const laneNode = createLane({
@@ -323,6 +318,8 @@ function handleAddLaneOnWrapNodeHorizontal({ direction, reactflow, id }) {
   const laneParams = { parentId: id, width: parentWidth - titleWidth, positionX: titleWidth };
   const laneNode = createLane(laneParams);
 
+  let newlaneNodeId = laneNode.id;
+
   if (direction === Position.Top) {
     const newNodes = [...nodes];
 
@@ -330,7 +327,6 @@ function handleAddLaneOnWrapNodeHorizontal({ direction, reactflow, id }) {
       laneNode.style.height = parentHeight;
       const laneNode1 = createLane({
         ...laneParams,
-        positionY: parentHeight
       });
 
       newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
@@ -338,18 +334,17 @@ function handleAddLaneOnWrapNodeHorizontal({ direction, reactflow, id }) {
       newNodes.splice(nodeIndex + 1, 0, laneNode);
     }
 
-    reactflow.updateNode(id, node => {
-      const y = node.position.y;
-      node.position.y = y - laneDefalutHeight;
-    })
+    newNodes.forEach(node => {
+      if (node.id === id) {
+        const y = node.position.y;
+        node.position.y = y - laneDefalutHeight;
+      }
 
-    laneNodes.forEach(node => {
-      reactflow.updateNode(node.id, node => {
+      if (node.parentId === id && node.id !== newlaneNodeId) {
         const y = node.position.y;
         node.position.y = y + laneDefalutHeight;
-        return { ...node }
-      });
-    });
+      }
+    })
 
     reactflow.setNodes(newNodes);
   } else {
@@ -402,36 +397,26 @@ function handleAddLaneOnLaneNodeVertical({ direction, reactflow, id, parentId })
       ...laneParams,
       positionX
     });
-
+    const newlaneNodeId = laneNode.id;
 
     newNodes.splice(currentNodeIndex, 0, laneNode);
+
+    const boundaries = positionX;
     console.log(newNodes);
-    reactflow.setNodes(newNodes);
-    // reactflow.addNodes(laneNode);
+    newNodes.forEach(node => {
+      if (node.id === parentId) {
+        node.width = (node.width ?? node.measured.width) + laneDefalutWidth;
+        node.height = (node.height ?? node.measured.height);
+        const x = node.position.x;
+        node.position.x = x - laneDefalutWidth;
+      }
 
-    const needChangeNodes = laneNodes.slice(currentIndexInLaneNodes);
-    console.log(needChangeNodes, 'needChangeNodes')
-
-    needChangeNodes.forEach(node => {
-      reactflow.updateNode(node.id, node => {
+      if (node.parentId === parentId && node.id !== newlaneNodeId && node.position.x >= boundaries) {
         const x = node.position.x;
         node.position.x = x + laneDefalutWidth;
-        return { ...node }
-      });
-    });
-
-
-
-    reactflow.updateNode(parentId, (node) => {
-      node.width = (node.width ?? node.measured.width) + laneDefalutWidth;
-      node.height = (node.height ?? node.measured.height);
-      const x = node.position.x;
-      node.position.x = x - laneDefalutWidth;
+      }
     })
-
-    // onWrapPositionYChangeEffect({ reactflow, parentId })
-
-
+    reactflow.setNodes(newNodes);
   } else {
     const laneNode = createLane({
       ...laneParams,
@@ -469,7 +454,7 @@ function handleAddLaneOnWrapNodeVertical({ direction, reactflow, id }) {
 
   const laneParams = { parentId: id, height: parentHeight - titleWidth, positionY: titleWidth };
   const laneNode = createLane(laneParams);
-
+  let newlaneNodeId = laneNode.id;
   if (direction === Position.Left) {
     const newNodes = [...nodes];
 
@@ -477,7 +462,6 @@ function handleAddLaneOnWrapNodeVertical({ direction, reactflow, id }) {
       laneNode.style.width = parentWidth;
       const laneNode1 = createLane({
         ...laneParams,
-        positionX: parentWidth
       });
 
       newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
@@ -485,18 +469,17 @@ function handleAddLaneOnWrapNodeVertical({ direction, reactflow, id }) {
       newNodes.splice(nodeIndex + 1, 0, laneNode);
     }
 
-    reactflow.updateNode(id, node => {
-      const x = node.position.x;
-      node.position.x = x - laneDefalutWidth;
-    })
+    newNodes.forEach(node => {
+      if (node.id === id) {
+        const x = node.position.x;
+        node.position.x = x - laneDefalutWidth;
+      }
 
-    laneNodes.forEach(node => {
-      reactflow.updateNode(node.id, node => {
+      if (node.parentId === id && node.id !== newlaneNodeId) {
         const x = node.position.x;
         node.position.x = x + laneDefalutWidth;
-        return { ...node }
-      });
-    });
+      }
+    })
 
     reactflow.setNodes(newNodes);
   } else {
