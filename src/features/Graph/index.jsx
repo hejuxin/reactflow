@@ -26,7 +26,7 @@ import { Breadcrumb, Button, Drawer, Form, Input } from "antd";
 import { nodeTypes } from "@/nodes";
 import { FlowContext } from "@/context";
 import { useDrawerParams, useGraph } from "@/utils/hooks";
-import { getHash } from "@/utils/util";
+import { getHash, getNodeBoundaries, getRectBoundaries } from "@/utils/util";
 import { createParticipant, deleteLane, ParticipantLane, ParticipantHorizontal, ParticipantVertical, createParticipantLaneSet } from "@/nodes/Swim/utils";
 import { Slider, Toolbar } from "..";
 import { maingraphId } from "@/store";
@@ -140,16 +140,70 @@ const Graph = () => {
       // // 使用 screenToFlowPosition 将像素坐标转换为内部 ReactFlow 坐标系
       // todo 拖拽加入坐标不准问题
       const position = reactflow.screenToFlowPosition({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
+        // x: event.clientX - reactFlowBounds.left,
+        // y: event.clientY - reactFlowBounds.top,
+        x: event.clientX,
+        y: event.clientY,
       });
+      const nodes = reactflow.getNodes();
+      const participantNode = nodes.find(n => n.type.startsWith("Participant"));
 
       if (type === ParticipantHorizontal) {
         const participant = createParticipant({ position });
         newNodeRef.current = participant;
 
-        const participantLaneSet = createParticipantLaneSet({ position });
-        reactflow.addNodes([participant, participantLaneSet]);
+
+        let newNodes = [];
+        const boundaries = getRectBoundaries(nodes);
+        if (boundaries) {
+          const { startX, startY, endX, endY } = boundaries;
+
+          const newPostion = { ...position };
+          const newStyle = { width: Number(participant.style.width), height: Number(participant.style.height) };
+
+          if (newPostion.x > startX) {
+            newPostion.x = startX;
+          }
+          if (newPostion.y > startY) {
+            newPostion.y = startY;
+          }
+
+          if ((newPostion.x + newStyle.width) < endX) {
+            newStyle.width = endX;
+          }
+
+          if ((newPostion.y + newStyle.height) < endY) {
+            console.log(endY - newPostion.y, "dd")
+            newStyle.height = endY;
+          }
+
+          participant.position = newPostion;
+          participant.style = newStyle;
+
+          newNodes = nodes.map(node => {
+            const x = node.position.x;
+            const y = node.position.y;
+
+            node.position = {
+              x: x - newPostion.x,
+              y: y - newPostion.y
+            }
+
+            node.parentId = participant.id;
+            node.extent = "parent";
+
+            return { ...node }
+          })
+        }
+
+        // if (newPostion.x > startX || (newPostion.x + titleWidth) > startX) {
+        //   newPostion.x = startX - titleWidth;
+        // }
+
+
+        // const participantLaneSet = createParticipantLaneSet({ position });
+        // reactflow.addNodes([participant, participantLaneSet]);
+        reactflow.setNodes([participant, ...newNodes])
       } else if (type === ParticipantVertical) {
         const participant = createParticipant({ position, isHorizontal: false });
 
@@ -167,6 +221,20 @@ const Graph = () => {
           zIndex: 10
         };
 
+        if (participantNode) {
+          const { x, y, endX, endY } = getNodeBoundaries(participantNode);
+          if (position.x < x || position.x > endX || position.y < y || position.y > endY) return;
+          newNode.parentId = participantNode.id;
+          newNode.extent = 'parent';
+          newNode.zIndex = 10;
+          const intersectingNodePos = participantNode.position;
+          // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
+          newNode.position = {
+            x: position.x - intersectingNodePos.x,
+            y: position.y - intersectingNodePos.y
+          }
+        }
+
         reactflow.addNodes(newNode)
         newNodeRef.current = newNode;
       }
@@ -183,54 +251,54 @@ const Graph = () => {
     const info = p[0][0];
 
     // 当类型为尺寸变化时
-    if (info?.type === 'dimensions') {
-      // ，判断是否有交集
-      if (newNodeRef.current && info.id === newNodeRef.current.id) {
-        const newNode = newNodeRef.current;
-        newNodeRef.current = null;
-        const intersectingNodes = reactflow?.getIntersectingNodes({ id: newNode.id }, false);
-        console.log(newNode.id, intersectingNodes, 'intersectingNodes')
+    // if (info?.type === 'dimensions') {
+    //   // ，判断是否有交集
+    //   if (newNodeRef.current && info.id === newNodeRef.current.id) {
+    //     const newNode = newNodeRef.current;
+    //     newNodeRef.current = null;
+    //     const intersectingNodes = reactflow?.getIntersectingNodes({ id: newNode.id }, false);
+    //     console.log(newNode.id, intersectingNodes, 'intersectingNodes')
 
-        if (intersectingNodes.length) {
-          // todo 如果有多个交集
-          console.log(intersectingNodes, 'intersectingNodes');
-          const intersectingNode = intersectingNodes[0];
+    //     if (intersectingNodes.length) {
+    //       // todo 如果有多个交集
+    //       console.log(intersectingNodes, 'intersectingNodes');
+    //       const intersectingNode = intersectingNodes[0];
 
-          reactflow?.updateNode(newNode.id, (node) => {
-            node.parentId = intersectingNode.id;
-            node.extent = 'parent';
-            const position = node.position;
-            const intersectingNodePos = intersectingNode.position;
-            // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
-            node.position = {
-              x: position.x - intersectingNodePos.x,
-              y: position.y - intersectingNodePos.y
-            }
-            return { ...node }
-          }, { replace: true })
+    //       reactflow?.updateNode(newNode.id, (node) => {
+    //         node.parentId = intersectingNode.id;
+    //         node.extent = 'parent';
+    //         const position = node.position;
+    //         const intersectingNodePos = intersectingNode.position;
+    //         // 需要调整相对位置。原有位置是相对整个画布的，需调整完相对父级的
+    //         node.position = {
+    //           x: position.x - intersectingNodePos.x,
+    //           y: position.y - intersectingNodePos.y
+    //         }
+    //         return { ...node }
+    //       }, { replace: true })
 
-          // const newNodes = [...nodes];
-          // newNodes[nodes.length - 1].parentId = intersectingNode.id;
-          // newNodes[nodes.length - 1].extent = 'parent';
-          // setNodes([...newNodes]);
-        }
-      }
+    //       // const newNodes = [...nodes];
+    //       // newNodes[nodes.length - 1].parentId = intersectingNode.id;
+    //       // newNodes[nodes.length - 1].extent = 'parent';
+    //       // setNodes([...newNodes]);
+    //     }
+    //   }
 
-      const id = info.id;
+    //   const id = info.id;
 
-      // if (node.type === 'swimlanewrap') {
-      //   const { width } = node;
-      //   const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
+    //   // if (node.type === 'swimlanewrap') {
+    //   //   const { width } = node;
+    //   //   const laneNodes = nodes.filter(node => node.id.startsWith(id) && node.id !== id);
 
-      //   laneNodes.forEach(node => {
-      //     reactflow?.updateNode(node.id, (node) => {
-      //       node.width = width - titleWidth;
-      //       node.position.x = titleWidth
-      //       return { ...node }
-      //     },{ replace: true })
-      //   })
-      // }
-    }
+    //   //   laneNodes.forEach(node => {
+    //   //     reactflow?.updateNode(node.id, (node) => {
+    //   //       node.width = width - titleWidth;
+    //   //       node.position.x = titleWidth
+    //   //       return { ...node }
+    //   //     },{ replace: true })
+    //   //   })
+    //   // }
+    // }
 
     // if (info.type === 'add') {
     //   const id = info.id;
@@ -291,10 +359,10 @@ const Graph = () => {
               />
             ) : <></>}
           </Panel>
-          <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
+          {/* <Panel position="top-left" style={{ margin: 0, top: 0, left: 0, height: "100%", display: "flex" }}>
             <Toolbar />
             <Slider />
-          </Panel>
+          </Panel> */}
           <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
         </ReactFlow>
       </FlowContext.Provider>

@@ -465,6 +465,7 @@ function handleAddLaneOnWrapNodeVertical({ direction, reactflow, id }) {
         ...laneParams,
       });
 
+      newlaneNodeId = laneNode1.id;
       newNodes.splice(nodeIndex + 1, 0, laneNode, laneNode1);
     } else {
       newNodes.splice(nodeIndex + 1, 0, laneNode);

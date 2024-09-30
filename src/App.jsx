@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Graph } from './features';
+import { Graph, Toolbar, Slider } from './features';
 import './App.css';
 import { ReactFlowProvider } from '@xyflow/react';
 
@@ -9,6 +9,8 @@ export default function App() {
       {/* <Toolbar />
       <Slider /> */}
       <ReactFlowProvider>
+        <Toolbar />
+        <Slider />
         <Graph />
       </ReactFlowProvider>
     </div>

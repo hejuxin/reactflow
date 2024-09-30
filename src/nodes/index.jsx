@@ -29,11 +29,13 @@ const nodeTypesArr = [
   {
     name: "水平泳道",
     type: ParticipantHorizontal,
+    BPMNtype: "participant",
     component: ParticipantHorizontalNode
   },
   {
     name: "垂直泳道",
     type: ParticipantVertical,
+    BPMNtype: "participant",
     component: ParticipantVerticalNode
   },
   {
